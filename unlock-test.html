@@ -1,0 +1,29 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>PIN Unlock Test</title>
+  <style>body{font-family:system-ui;padding:20px} #state{margin-top:10px;font-weight:700}</style>
+</head>
+<body>
+  <h1>PIN Test</h1>
+  <input id="pin" type="password" placeholder="Staff PIN" />
+  <button id="unlock" type="button">Unlock</button>
+  <div id="state">locked</div>
+
+  <script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const REQUIRED_PIN = "2301";
+    console.log('PIN test loaded. REQUIRED_PIN =', REQUIRED_PIN);
+    document.getElementById('unlock').addEventListener('click', () => {
+      const pin = (document.getElementById('pin').value || '').trim();
+      if (!pin) return alert('Enter PIN');
+      if (pin !== REQUIRED_PIN) return alert('Invalid PIN');
+      document.getElementById('state').textContent = 'unlocked';
+      alert('Unlocked!');
+    });
+  });
+  </script>
+</body>
+</html>
