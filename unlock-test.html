@@ -3,27 +3,63 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>PIN Unlock Test</title>
-  <style>body{font-family:system-ui;padding:20px} #state{margin-top:10px;font-weight:700}</style>
+  <title>VUMC Kids Check-In — PIN Test</title>
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;margin:0;padding:24px;background:#0b1728;color:#eaf2ff}
+    .card{max-width:560px;margin:auto;background:#0f1e34;border:1px solid rgba(255,255,255,.12);padding:20px;border-radius:14px;box-shadow:0 8px 24px rgba(0,0,0,.3)}
+    h1{margin:0 0 8px;font-size:20px}
+    .row{display:flex;gap:10px;margin:12px 0}
+    input,button{font-size:16px;border-radius:10px;border:1px solid rgba(255,255,255,.18);padding:10px 12px;background:#0c1730;color:#eaf2ff}
+    button{background:#1976ff;border:none;font-weight:700;cursor:pointer}
+    .status{margin-top:8px;padding:8px 12px;border-radius:10px;font-weight:600}
+    .ok{background:rgba(115,255,205,.15);border:1px solid rgba(115,255,205,.45)}
+    .bad{background:rgba(255,138,160,.15);border:1px solid rgba(255,138,160,.45)}
+    .muted{opacity:.85;font-size:14px}
+  </style>
 </head>
 <body>
-  <h1>PIN Test</h1>
-  <input id="pin" type="password" placeholder="Staff PIN" />
-  <button id="unlock" type="button">Unlock</button>
-  <div id="state">locked</div>
+  <div class="card">
+    <h1>Staff Sign-In (PIN Test)</h1>
+    <div id="jsState" class="status bad">JS not loaded ❌</div>
+
+    <div class="row">
+      <input id="pin" type="password" placeholder="Staff PIN" autocomplete="one-time-code" />
+      <button id="unlock" type="button">Unlock</button>
+    </div>
+
+    <div id="state" class="status bad">locked</div>
+    <p class="muted">Tip: Press Enter in the PIN box.</p>
+  </div>
 
   <script>
-  document.addEventListener('DOMContentLoaded', () => {
-    const REQUIRED_PIN = "2301";
-    console.log('PIN test loaded. REQUIRED_PIN =', REQUIRED_PIN);
-    document.getElementById('unlock').addEventListener('click', () => {
-      const pin = (document.getElementById('pin').value || '').trim();
-      if (!pin) return alert('Enter PIN');
-      if (pin !== REQUIRED_PIN) return alert('Invalid PIN');
-      document.getElementById('state').textContent = 'unlocked';
-      alert('Unlocked!');
-    });
-  });
+    (function(){
+      const REQUIRED_PIN = "2301";
+      // show that JS is actually running
+      const jsState = document.getElementById('jsState');
+      jsState.textContent = 'JS loaded ✅  (PIN = ' + REQUIRED_PIN + ')';
+      jsState.className = 'status ok';
+
+      const stateEl = document.getElementById('state');
+      const pinInput = document.getElementById('pin');
+      const btn = document.getElementById('unlock');
+
+      function setUnlocked() {
+        stateEl.textContent = 'unlocked';
+        stateEl.className = 'status ok';
+        alert('Unlocked!');
+      }
+
+      btn.addEventListener('click', () => {
+        const pin = (pinInput.value || '').trim();
+        if (!pin) { alert('Enter PIN'); return; }
+        if (pin !== REQUIRED_PIN) { alert('Invalid PIN'); return; }
+        setUnlocked();
+      });
+
+      pinInput.addEventListener('keydown', (e)=>{ if (e.key === 'Enter') btn.click(); });
+
+      console.log('PIN test page ready. REQUIRED_PIN =', REQUIRED_PIN);
+    })();
   </script>
 </body>
 </html>
