@@ -101,7 +101,7 @@
           <option>Pre‑K</option>
           <option>Kids Church</option>
         </select>
-        <button id="signInBtn">Unlock</button>
+        <button id="signInBtn" type="button">Unlock</button>
         <button id="guestBtn" class="btn primary" disabled>Guest Check‑In</button>
         <button id="photoBtn" class="btn ghost" disabled>Take Photo</button>
       </div>
@@ -320,8 +320,20 @@
   }
 
   // ─── EVENTS ───────────────────────────────────────────────────────────────
-  el('#signInBtn').addEventListener('click', () => {
-    const pin = el('#pin').value.trim(); if (!pin) return alert('Enter PIN'); if (pin !== REQUIRED_PIN) return alert('Invalid PIN');
+  // Debug log to verify script loaded
+console.log('Check-in app loaded. REQUIRED_PIN =', typeof REQUIRED_PIN !== 'undefined' ? REQUIRED_PIN : '(missing)');
+
+el('#signInBtn').addEventListener('click', () => {
+  const pin = (el('#pin').value || '').trim();
+  if (!pin) return alert('Enter PIN');
+  if (pin !== REQUIRED_PIN) return alert('Invalid PIN');
+  unlocked = true; el('#signed').textContent = 'unlocked'; el('#signed').className = 'ok';
+  els('.kid button').forEach(b => b.disabled = false);
+  el('#guestBtn').disabled = false; el('#photoBtn').disabled = false;
+  alert('Station unlocked for check-in.');
+});
+// Allow Enter key to unlock
+el('#pin').addEventListener('keydown', (e)=>{ if (e.key === 'Enter') el('#signInBtn').click(); }); if (!pin) return alert('Enter PIN'); if (pin !== REQUIRED_PIN) return alert('Invalid PIN');
     unlocked = true; el('#signed').textContent = 'unlocked'; el('#signed').className = 'ok'; els('.kid button').forEach(b => b.disabled = false); el('#guestBtn').disabled = false; el('#photoBtn').disabled = false;
   });
 
