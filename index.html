@@ -3,192 +3,450 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>VUMC Kids Check‑In</title>
-  <script src="https://labelwriter.com/software/dls/sdk/js/DYMO.Label.Framework.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <title>VUMC Kids Check-In</title>
+
   <style>
-    :root { --bg:#0b1728; --card:#0f1e34; --muted:#a8bade; --text:#eaf2ff; --accent:#6fb2ff; --line:rgba(255,255,255,0.08); }
+    :root {
+      --bg:#0b1728;
+      --card:#0f1e34;
+      --muted:#a8bade;
+      --text:#eaf2ff;
+      --accent:#6fb2ff;
+      --line:rgba(255,255,255,0.08);
+    }
     * { box-sizing: border-box; }
-    body { margin:0; font:16px system-ui, sans-serif; background: linear-gradient(180deg,#0b1728,#0a1422); color:var(--text); }
-    header { display:flex; align-items:center; justify-content:space-between; padding:14px 16px; background:rgba(255,255,255,0.03); border-bottom:1px solid var(--line); }
+    body {
+      margin:0;
+      font:16px system-ui, sans-serif;
+      background: linear-gradient(180deg,#0b1728,#0a1422);
+      color:var(--text);
+    }
+    header {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:14px 16px;
+      background:rgba(255,255,255,0.03);
+      border-bottom:1px solid var(--line);
+    }
     header h1 { margin:0; font-size:18px; }
-    .container { max-width:1100px; margin:16px auto; padding:0 12px; }
-    .card { background:var(--card); border:1px solid var(--line); border-radius:16px; box-shadow:0 8px 24px rgba(0,0,0,0.25); }
-    .toolbar { display:flex; flex-wrap:wrap; gap:10px; padding:12px; align-items:center; border-bottom:1px solid var(--line); }
-    .toolbar h2 { margin:0 8px 0 0; font-size:16px; font-weight:600; color:#cfe1ff; }
-    .toolbar input, .toolbar select, .toolbar button { background:#0c1730; color:var(--text); border:1px solid rgba(255,255,255,0.14); border-radius:10px; padding:10px 12px; font-size:15px; }
-    .toolbar button { background: linear-gradient(180deg,#1976ff,#0f63da); border:none; font-weight:700; cursor:pointer; }
-    .flex { display:flex; gap:16px; }
-    .left, .right { padding:16px; }
-    .left { flex: 1 1 640px; }
-    .right { width:360px; background:#0c1730; border-left:1px solid var(--line); }
-    .list { max-height:64vh; overflow:auto; border:1px solid var(--line); border-radius:12px; }
-    .kid { display:flex; justify-content:space-between; gap:10px; padding:10px 12px; border-bottom:1px solid var(--line); }
-    .kid .meta { color:var(--muted); font-size:12px; }
-    .kid button { padding:12px; border:none; border-radius:10px; background:#1a7cff; color:white; font-weight:700; cursor:pointer; }
-    .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.55); display: none; align-items: center; justify-content: center; }
+    .container {
+      max-width:900px;
+      margin:16px auto;
+      padding:0 12px;
+    }
+    .card {
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:16px;
+      box-shadow:0 8px 24px rgba(0,0,0,0.25);
+      padding:16px;
+    }
+    h2 {
+      margin:0 0 12px;
+      font-size:18px;
+      color:#cfe1ff;
+    }
+    .grid {
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:12px;
+    }
+    .full { grid-column:1 / -1; }
+    label {
+      font-size:14px;
+      color:var(--muted);
+      display:block;
+      margin-bottom:4px;
+    }
+    input, select {
+      width:100%;
+      background:#0c1730;
+      color:var(--text);
+      border:1px solid rgba(255,255,255,0.14);
+      border-radius:10px;
+      padding:10px 12px;
+      font-size:15px;
+    }
+    input::placeholder { color:rgba(168,186,222,0.6); }
+    .row {
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      margin-top:14px;
+    }
+    .row.space-between {
+      justify-content:space-between;
+      align-items:center;
+    }
+    .btn {
+      padding:11px 16px;
+      border-radius:10px;
+      border:none;
+      font-weight:700;
+      cursor:pointer;
+      font-size:15px;
+    }
+    .btn.primary {
+      background: linear-gradient(180deg,#1976ff,#0f63da);
+      color:#fff;
+    }
+    .btn.ghost {
+      background:transparent;
+      color:var(--text);
+      border:1px solid rgba(255,255,255,0.18);
+    }
+    .btn.small {
+      padding:8px 12px;
+      font-size:13px;
+      border-radius:999px;
+    }
+    .tag {
+      display:inline-block;
+      padding:3px 8px;
+      border-radius:999px;
+      background:rgba(255,255,255,0.06);
+      font-size:12px;
+      color:var(--muted);
+    }
+    .status {
+      margin-top:10px;
+      font-size:14px;
+      color:var(--muted);
+    }
+    .status strong { color:var(--accent); }
+
+    /* Modal */
+    .modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
     .modal.open { display: flex; }
-    .dialog { width: 640px; max-width: 96vw; background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 16px; color:var(--text); }
-    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .grid .full { grid-column: 1 / -1; }
-    .dialog input, .dialog select { width: 100%; background:#0c1730; color:var(--text); border:1px solid rgba(255,255,255,0.14); border-radius:10px; padding:12px 14px; font-size:16px; }
-    .dialog .row { display:flex; gap:10px; justify-content:flex-end; margin-top: 12px; }
-    .btn { padding:12px 16px; border:none; border-radius:10px; font-weight:700; cursor:pointer; }
-    .btn.primary { background: linear-gradient(180deg,#1976ff,#0f63da); color:#fff; }
-    .btn.ghost { background: transparent; color: var(--text); border:1px solid rgba(255,255,255,0.18); }
-    video { width:100%; border:1px solid var(--line); border-radius:12px; }
+    .dialog {
+      width: 640px;
+      max-width: 96vw;
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 16px;
+      color:var(--text);
+    }
+    .dialog h3 {
+      margin:0 0 10px;
+      font-size:18px;
+    }
+    video {
+      width:100%;
+      border:1px solid var(--line);
+      border-radius:12px;
+      background:#000;
+    }
+    .thumb-row {
+      display:flex;
+      gap:10px;
+      margin-top:10px;
+      flex-wrap:wrap;
+    }
+    .thumb {
+      width:80px;
+      height:80px;
+      border-radius:12px;
+      border:1px solid var(--line);
+      background:#0c1730 center/cover no-repeat;
+    }
+
+    @media (max-width:700px) {
+      .grid { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
   <header>
-    <h1>VUMC Kids Check‑In</h1>
-    <div id="printerStatus">Printer: <span class="muted">checking…</span></div>
+    <h1>VUMC Kids Check-In</h1>
+    <span class="tag">Kiosk Mode • Photos + PIN Text</span>
   </header>
 
   <div class="container">
     <div class="card">
-      <div class="toolbar">
-        <h2>Staff Sign‑In</h2>
-        <input id="pin" type="password" placeholder="Staff PIN" />
-        <button id="signInBtn" type="button">Unlock</button>
-        <button id="guestBtn" class="btn primary" disabled>Guest Check‑In</button>
-        <button id="photoBtn" class="btn ghost" disabled>Take Photo</button>
-      </div>
-      <div class="flex">
-        <div class="left">
-          <div class="list" id="list"></div>
+      <h2>New Check-In</h2>
+      <p style="margin:0 0 14px;font-size:14px;color:var(--muted);">
+        Enter the child and parent info, capture photos, and we’ll generate a pickup PIN.
+        The PIN can be shown on-screen and optionally texted to the parent using
+        VUMC Kids’ Google Voice number (502-871-4363).
+      </p>
+
+      <form id="checkinForm">
+        <div class="grid">
+          <div>
+            <label>Child First Name</label>
+            <input id="child_first" required placeholder="e.g. Emma" />
+          </div>
+          <div>
+            <label>Child Last Name</label>
+            <input id="child_last" placeholder="optional" />
+          </div>
+
+          <div class="full">
+            <label>Room</label>
+            <select id="room" required>
+              <option value="" disabled selected>Select a room</option>
+              <option value="Nursery">Nursery</option>
+              <option value="Sunday School">Sunday School</option>
+              <option value="Children's Church">Children's Church</option>
+            </select>
+          </div>
+
+          <div>
+            <label>Parent First Name</label>
+            <input id="parent_first" required placeholder="e.g. Michael" />
+          </div>
+          <div>
+            <label>Parent Last Name</label>
+            <input id="parent_last" placeholder="optional" />
+          </div>
+
+          <div class="full">
+            <label>Parent Mobile Number</label>
+            <input id="parent_phone" required placeholder="e.g. 859-555-1234" />
+          </div>
         </div>
-        <aside class="right">
-          <h3>Print Preview (QR)</h3>
-          <div id="qrPreview"></div>
-          <div id="signed">locked</div>
-        </aside>
-      </div>
+
+        <div class="thumb-row">
+          <div>
+            <button type="button" class="btn small ghost" id="captureChildBtn">Capture Child Photo</button>
+            <div id="childThumb" class="thumb" title="Child photo"></div>
+          </div>
+          <div>
+            <button type="button" class="btn small ghost" id="captureParentBtn">Capture Parent Photo</button>
+            <div id="parentThumb" class="thumb" title="Parent photo"></div>
+          </div>
+        </div>
+
+        <div class="row space-between">
+          <div class="status" id="statusMsg">
+            Photos not captured yet.
+          </div>
+          <button type="submit" class="btn primary">Complete Check-In</button>
+        </div>
+      </form>
+
+      <div class="status" id="pinResult"></div>
     </div>
   </div>
 
-  <!-- Guest Modal -->
-  <div class="modal" id="guestModal">
-    <div class="dialog">
-      <h3>Quick Guest Check‑In</h3>
-      <div class="grid">
-        <input id="g_parent_first" placeholder="Parent First (optional)" />
-        <input id="g_parent_last" placeholder="Parent Last (optional)" />
-        <input id="g_child_first" placeholder="Child First *" />
-        <input id="g_child_last" placeholder="Child Last (optional)" />
-        <select id="g_group" class="full"><option>Nursery</option><option>Pre‑K</option><option>Kids Church</option></select>
-        <input id="g_allergies" class="full" placeholder="Allergies / Notes (optional)" />
-        <input id="g_phone" class="full" placeholder="Parent Mobile (required)" required />
-      </div>
-      <div class="row">
-        <button class="btn ghost" id="g_cancel" type="button">Cancel</button>
-        <button class="btn primary" id="g_submit" type="button">Print Guest Label</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Photo Modal -->
+  <!-- Camera Modal -->
   <div class="modal" id="photoModal">
     <div class="dialog">
-      <h3>Photo Capture</h3>
+      <h3 id="photoModalTitle">Capture Photo</h3>
+      <p style="margin:0 0 8px;font-size:13px;color:var(--muted);">
+        Make sure the face is clearly visible, then tap “Save Photo”.
+      </p>
       <video id="cam" autoplay playsinline></video>
-      <div class="row">
-        <button class="btn ghost" id="snapChild" type="button">Save Child</button>
-        <button class="btn ghost" id="snapAdult" type="button">Save Adult</button>
-        <button class="btn primary" id="closePhoto" type="button">Done</button>
+      <div class="row" style="justify-content:flex-end;margin-top:10px;">
+        <button class="btn ghost" type="button" id="cancelPhotoBtn">Cancel</button>
+        <button class="btn primary" type="button" id="savePhotoBtn">Save Photo</button>
       </div>
     </div>
   </div>
 
   <script>
-    const REQUIRED_PIN = "2301";
-    const el = sel => document.querySelector(sel);
-    let unlocked = false, camStream = null;
+    // ================ CONFIG ================
+    // If you build an Apps Script web app to send SMS via Google Voice,
+    // put its URL here. Front-end will POST { phone: "+1...", text: "..." }.
+    const SMS_API_URL = ""; // e.g., https://script.google.com/macros/s/AKfycbx.../exec
+    const DISPLAY_FROM_NUMBER = "(502) 871-4363"; // VUMC Kids Google Voice
 
-    // Unlock logic
-    document.addEventListener('DOMContentLoaded', ()=>{
-      console.log('App loaded. REQUIRED_PIN =', REQUIRED_PIN);
-      el('#signInBtn').addEventListener('click', ()=>{
-        const pin = el('#pin').value.trim();
-        if (!pin) return alert('Enter PIN');
-        if (pin !== REQUIRED_PIN) return alert('Invalid PIN');
-        unlocked = true;
-        el('#signed').textContent = 'unlocked';
-        el('#signed').className = 'ok';
-        el('#guestBtn').disabled=false;
-        el('#photoBtn').disabled=false;
-        alert('Station unlocked.');
-      });
-      el('#pin').addEventListener('keydown',(e)=>{if(e.key==='Enter')el('#signInBtn').click();});
-    });
+    const $ = sel => document.querySelector(sel);
 
-    // Guest modal
-    el('#guestBtn').addEventListener('click',()=>{if(unlocked) el('#guestModal').classList.add('open');});
-    el('#g_cancel').addEventListener('click',()=>el('#guestModal').classList.remove('open'));
-    el('#g_submit').addEventListener('click',()=>{el('#guestModal').classList.remove('open');alert('Guest checked in');});
+    let camStream = null;
+    let captureTarget = null; // 'child' or 'parent'
+    let childPhotoDataUrl = null;
+    let parentPhotoDataUrl = null;
 
-    // Photo modal
-    el('#photoBtn').addEventListener('click', async ()=>{
-      if(!unlocked)return alert('Unlock first.');
-      el('#photoModal').classList.add('open');
-      try{
-        if(!(location.protocol==='https:'||location.hostname==='localhost')){
-          alert('Camera requires HTTPS.');
+    const childThumb  = $("#childThumb");
+    const parentThumb = $("#parentThumb");
+    const statusMsg   = $("#statusMsg");
+    const pinResult   = $("#pinResult");
+
+    // ================ CAMERA HELPERS ================
+    async function openCamera(target) {
+      captureTarget = target;
+      const modal = $("#photoModal");
+      const title = $("#photoModalTitle");
+      const video = $("#cam");
+
+      title.textContent = target === "child" ? "Capture Child Photo" : "Capture Parent Photo";
+      modal.classList.add("open");
+
+      try {
+        if (!(location.protocol === "https:" || location.hostname === "localhost")) {
+          alert("Camera access requires HTTPS or localhost.");
+          closeCamera();
           return;
         }
-        camStream = await navigator.mediaDevices.getUserMedia({video:true});
-        el('#cam').srcObject = camStream;
-        await el('#cam').play();
-      }catch(e){alert('Camera not available');}
+        camStream = await navigator.mediaDevices.getUserMedia({ video: true });
+        video.srcObject = camStream;
+        await video.play();
+      } catch (e) {
+        console.error(e);
+        alert("Camera not available.");
+        closeCamera();
+      }
+    }
+
+    function closeCamera() {
+      $("#photoModal").classList.remove("open");
+      const video = $("#cam");
+      if (camStream) {
+        camStream.getTracks().forEach(t => t.stop());
+        camStream = null;
+      }
+      video.srcObject = null;
+      captureTarget = null;
+    }
+
+    function captureFrameAsDataUrl() {
+      const video = $("#cam");
+      if (!video.videoWidth) return null;
+
+      const canvas = document.createElement("canvas");
+      canvas.width  = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      return canvas.toDataURL("image/jpeg", 0.85);
+    }
+
+    // ================ PHONE / SMS HELPERS ================
+    function normalizeUSPhoneToE164(input) {
+      if (!input) return null;
+      const digits = String(input).replace(/[^0-9]/g, "");
+      if (digits.length === 10) return "+1" + digits;
+      if (digits.length === 11 && digits.startsWith("1")) return "+" + digits;
+      if (digits.length === 12 && digits.startsWith("+1")) return digits;
+      return null;
+    }
+
+    async function sendSms(phoneE164, text) {
+      if (!SMS_API_URL) {
+        console.warn("SMS_API_URL not configured; skipping SMS send.");
+        return;
+      }
+      try {
+        await fetch(SMS_API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ phone: phoneE164, text })
+        });
+      } catch (e) {
+        console.warn("SMS webhook error", e);
+      }
+    }
+
+    // ================ UI EVENTS ================
+    document.addEventListener("DOMContentLoaded", () => {
+      $("#captureChildBtn").addEventListener("click", () => openCamera("child"));
+      $("#captureParentBtn").addEventListener("click", () => openCamera("parent"));
+      $("#cancelPhotoBtn").addEventListener("click", closeCamera);
+
+      $("#savePhotoBtn").addEventListener("click", () => {
+        const dataUrl = captureFrameAsDataUrl();
+        if (!dataUrl) {
+          alert("Unable to capture image. Try again.");
+          return;
+        }
+
+        if (captureTarget === "child") {
+          childPhotoDataUrl = dataUrl;
+          childThumb.style.backgroundImage = `url(${dataUrl})`;
+        } else if (captureTarget === "parent") {
+          parentPhotoDataUrl = dataUrl;
+          parentThumb.style.backgroundImage = `url(${dataUrl})`;
+        }
+
+        updatePhotoStatus();
+        closeCamera();
+      });
+
+      $("#checkinForm").addEventListener("submit", handleCheckIn);
     });
-    el('#closePhoto').addEventListener('click',()=>{
-      el('#photoModal').classList.remove('open');
-      if(camStream){camStream.getTracks().forEach(t=>t.stop());camStream=null;}
-    });
-  </script>
-<script>
-(function(){
-  // === SMS via Google Apps Script (optional) ===
-  // Put your Apps Script Web App URL here (doPost handler)
-  const SMS_API_URL = ""; // e.g., https://script.google.com/macros/s/AKfycbx.../exec
 
-  function normalizeUSPhoneToE164(input){
-    if (!input) return null;
-    const digits = String(input).replace(/[^0-9]/g,'');
-    if (digits.length === 10) return '+1' + digits;                 // 8595551234 -> +18595551234
-    if (digits.length === 11 && digits.startsWith('1')) return '+' + digits; // 18595551234 -> +18595551234
-    if (digits.length === 12 && digits.startsWith('+1')) return digits;      // already +1XXXXXXXXXX
-    return null;
-  }
+    function updatePhotoStatus() {
+      if (childPhotoDataUrl && parentPhotoDataUrl) {
+        statusMsg.innerHTML = "Photos captured: <strong>Child</strong> and <strong>Parent</strong>.";
+      } else if (childPhotoDataUrl) {
+        statusMsg.innerHTML = "Photos captured: <strong>Child</strong>. Parent still needed.";
+      } else if (parentPhotoDataUrl) {
+        statusMsg.innerHTML = "Photos captured: <strong>Parent</strong>. Child still needed.";
+      } else {
+        statusMsg.textContent = "Photos not captured yet.";
+      }
+    }
 
-  async function sendSms(phoneE164, text){
-    if (!SMS_API_URL) return; // not configured yet
-    try { await fetch(SMS_API_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ phone: phoneE164, text }) }); }
-    catch(e){ console.warn('SMS webhook error', e); }
-  }
+    // ================ MAIN CHECK-IN HANDLER ================
+    async function handleCheckIn(e) {
+      e.preventDefault();
 
-  // Rebind Guest Submit to enforce phone normalization + SMS
-  const oldBtn = document.getElementById('g_submit');
-  if (oldBtn) {
-    const btn = oldBtn.cloneNode(true);
-    oldBtn.parentNode.replaceChild(btn, oldBtn);
-    btn.addEventListener('click', async ()=>{
-      const childFirst = (document.getElementById('g_child_first')||{}).value?.trim() || '';
-      const phoneRaw   = (document.getElementById('g_phone')||{}).value?.trim() || '';
-      if (!childFirst) { alert('Child first name is required.'); return; }
-      if (!phoneRaw)   { alert('Parent mobile is required.');    return; }
+      const childFirst  = $("#child_first").value.trim();
+      const childLast   = $("#child_last").value.trim();
+      const room        = $("#room").value;
+      const parentFirst = $("#parent_first").value.trim();
+      const parentLast  = $("#parent_last").value.trim();
+      const phoneRaw    = $("#parent_phone").value.trim();
+
+      if (!childFirst || !room || !parentFirst || !phoneRaw) {
+        alert("Please fill in required fields (child, room, parent, phone).");
+        return;
+      }
+      if (!childPhotoDataUrl || !parentPhotoDataUrl) {
+        const proceed = confirm("Both photos are not captured. Continue anyway?");
+        if (!proceed) return;
+      }
+
       const phoneE164 = normalizeUSPhoneToE164(phoneRaw);
-      if (!phoneE164) { alert('Enter a valid US mobile (10 digits or +1…).'); return; }
+      if (!phoneE164) {
+        alert("Please enter a valid US mobile number (10 digits or +1...).");
+        return;
+      }
 
-      const code = String(Math.floor(100000 + Math.random()*900000));
-      try { await sendSms(phoneE164, `Pickup code: ${code} for ${childFirst}`); } catch(e) { console.warn(e); }
+      // Generate a simple 4-digit PIN
+      const pin = String(Math.floor(1000 + Math.random() * 9000));
 
-      const gm = document.getElementById('guestModal'); if (gm) gm.classList.remove('open');
-      ['g_parent_first','g_parent_last','g_child_first','g_child_last','g_allergies','g_phone'].forEach(id=>{ const f=document.getElementById(id); if(f) f.value=''; });
-      alert('Guest checked in. Pickup code: ' + code);
-    });
-  }
-})();
-</script>
+      const childFullName  = childFirst + (childLast ? " " + childLast : "");
+      const parentFullName = parentFirst + (parentLast ? " " + parentLast : "");
+
+      // Build SMS text
+      const smsText =
+        `VUMC Kids (${DISPLAY_FROM_NUMBER}):\n` +
+        `Pickup PIN: ${pin}\n` +
+        `Child: ${childFullName}\n` +
+        `Room: ${room}`;
+
+      // Fire SMS (if backend configured)
+      await sendSms(phoneE164, smsText);
+
+      // For now just show PIN on screen (you can also send to backend for DB)
+      pinResult.innerHTML =
+        `Check-in complete.<br>` +
+        `<strong>PIN: ${pin}</strong> for ${childFullName} (Room: ${room}).<br>` +
+        `Text sent to: ${phoneRaw}`;
+
+      // Reset form + photos for next family
+      $("#checkinForm").reset();
+      childPhotoDataUrl = null;
+      parentPhotoDataUrl = null;
+      childThumb.style.backgroundImage  = "";
+      parentThumb.style.backgroundImage = "";
+      updatePhotoStatus();
+
+      // Optional: bring cursor back to first field
+      $("#child_first").focus();
+    }
+  </script>
 </body>
 </html>
