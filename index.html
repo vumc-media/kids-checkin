@@ -1,96 +1,191 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0b2a52">
+  <meta name="description" content="VUMC Kids Check-In kiosk">
+  <link rel="manifest" href="./manifest.json">
+  <link rel="stylesheet" href="./css/app.css">
   <title>VUMC Kids Check-In</title>
+</head>
+<body>
+  <header class="app-header">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">✦</div>
+      <div>
+        <h1>VUMC Kids</h1>
+        <p>Check-In</p>
+      </div>
+    </div>
 
-  <style>
-    :root {
-      --bg:#0b1728;
-      --card:#0f1e34;
-      --muted:#a8bade;
-      --text:#eaf2ff;
-      --accent:#6fb2ff;
-      --line:rgba(255,255,255,0.08);
-    }
-    * { box-sizing: border-box; }
-    body {
-      margin:0;
-      font:16px system-ui, sans-serif;
-      background: linear-gradient(180deg,#0b1728,#0a1422);
-      color:var(--text);
-    }
-    header {
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      padding:14px 16px;
-      background:rgba(255,255,255,0.03);
-      border-bottom:1px solid var(--line);
-    }
-    header h1 { margin:0; font-size:18px; }
-    .container {
-      max-width:900px;
-      margin:16px auto;
-      padding:0 12px;
-    }
-    .card {
-      background:var(--card);
-      border:1px solid var(--line);
-      border-radius:16px;
-      box-shadow:0 8px 24px rgba(0,0,0,0.25);
-      padding:16px;
-    }
-    h2 {
-      margin:0 0 12px;
-      font-size:18px;
-      color:#cfe1ff;
-    }
-    h3 {
-      margin:14px 0 8px;
-      font-size:16px;
-      color:#cfe1ff;
-    }
-    .grid {
-      display:grid;
-      grid-template-columns: 1fr 1fr;
-      gap:12px;
-    }
-    .full { grid-column:1 / -1; }
-    label {
-      font-size:14px;
-      color:var(--muted);
-      display:block;
-      margin-bottom:4px;
-    }
-    input, select {
-      width:100%;
-      background:#0c1730;
-      color:var(--text);
-      border:1px solid rgba(255,255,255,0.14);
-      border-radius:10px;
-      padding:10px 12px;
-      font-size:15px;
-    }
-    input::placeholder { color:rgba(168,186,222,0.6); }
-    .row {
-      display:flex;
-      flex-wrap:wrap;
-      gap:10px;
-      margin-top:14px;
-    }
-    .row.space-between {
-      justify-content:space-between;
-      align-items:center;
-    }
-    .btn {
-      padding:11px 16px;
-      border-radius:10px;
-      border:none;
-      font-weight:700;
-      cursor:pointer;
-      font-size:15px;
-    }
-    .btn.primary {
-      background: linear-gradient(180deg,#
+    <div class="backend-pill" title="Backend connection status">
+      <span id="backendDot" class="status-dot"></span>
+      <span id="backendText">Connecting…</span>
+    </div>
+  </header>
+
+  <main class="app-shell">
+    <nav class="nav-tabs" aria-label="Check-in sections">
+      <button class="nav-btn active" data-view="checkinView">Find Children</button>
+      <button class="nav-btn" data-view="guestView">Guest Check-In</button>
+      <button class="nav-btn" data-view="pickupView">Pickup</button>
+    </nav>
+
+    <section id="checkinView" class="view active">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h2>Find Children</h2>
+            <p>Search the Planning Center child roster, select one or more children, then check them in together.</p>
+          </div>
+          <button id="refreshRosterBtn" class="btn secondary" type="button">Refresh Roster</button>
+        </div>
+
+        <div class="panel-body">
+          <div class="toolbar">
+            <div class="field">
+              <label for="searchInput">Search child name or grade</label>
+              <input id="searchInput" type="search" placeholder="Start typing a name…" autocomplete="off">
+            </div>
+
+            <div class="field">
+              <label for="serviceSelect">Service / Event</label>
+              <select id="serviceSelect">
+                <option value="Sunday School">Sunday School</option>
+                <option value="Children's Church">Children's Church</option>
+                <option value="Nursery">Nursery</option>
+                <option value="Wednesday Kids">Wednesday Kids</option>
+                <option value="VUMC Kids Check-In">Other / General</option>
+              </select>
+            </div>
+
+            <button id="clearSearchBtn" class="btn secondary" type="button">Clear</button>
+          </div>
+
+          <div class="roster-layout">
+            <div>
+              <div id="resultsList" class="results">
+                <div class="empty">Loading the child roster…</div>
+              </div>
+            </div>
+
+            <aside class="selection-card">
+              <h3>Selected Children</h3>
+              <div id="selectedList" class="selected-list">
+                <div class="empty">No children selected.</div>
+              </div>
+
+              <div class="field top-gap">
+                <label for="checkinNote">Optional note</label>
+                <textarea id="checkinNote" rows="3" placeholder="Allergies, room note, or other information"></textarea>
+              </div>
+
+              <button id="submitCheckinBtn" class="btn success full-btn" type="button" disabled>
+                Complete Check-In
+              </button>
+
+              <div id="checkinNotice" class="notice hidden" role="status"></div>
+            </aside>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="guestView" class="view">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h2>Guest Check-In</h2>
+            <p>Use this for a child who is not yet in the Planning Center roster.</p>
+          </div>
+        </div>
+
+        <form id="guestForm" class="panel-body">
+          <div class="form-grid">
+            <div class="field">
+              <label for="guestChildFirst">Child first name</label>
+              <input id="guestChildFirst" required>
+            </div>
+
+            <div class="field">
+              <label for="guestChildLast">Child last name</label>
+              <input id="guestChildLast">
+            </div>
+
+            <div class="field">
+              <label for="guestParentName">Parent / guardian name</label>
+              <input id="guestParentName" required>
+            </div>
+
+            <div class="field">
+              <label for="guestPhone">Parent mobile number</label>
+              <input id="guestPhone" type="tel" required placeholder="859-555-1234">
+            </div>
+
+            <div class="field">
+              <label for="guestGrade">Age / grade</label>
+              <input id="guestGrade" placeholder="Example: Kindergarten">
+            </div>
+
+            <div class="field">
+              <label for="guestRoom">Room / group</label>
+              <select id="guestRoom">
+                <option>Nursery</option>
+                <option>Sunday School</option>
+                <option>Children's Church</option>
+                <option>Wednesday Kids</option>
+              </select>
+            </div>
+
+            <div class="field full">
+              <label for="guestNotes">Allergies / notes</label>
+              <textarea id="guestNotes" rows="4"></textarea>
+            </div>
+          </div>
+
+          <button class="btn success" type="submit">Check In Guest</button>
+          <div id="guestNotice" class="notice hidden" role="status"></div>
+        </form>
+      </div>
+    </section>
+
+    <section id="pickupView" class="view">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h2>Verify Pickup</h2>
+            <p>Enter the four-character pickup code shown at check-in.</p>
+          </div>
+        </div>
+
+        <div class="panel-body pickup-panel">
+          <div class="field pickup-field">
+            <label for="pickupCodeInput">Pickup code</label>
+            <input id="pickupCodeInput" maxlength="4" autocomplete="off" placeholder="A7KD">
+          </div>
+
+          <button id="verifyPickupBtn" class="btn primary" type="button">Verify and Check Out</button>
+          <div id="pickupNotice" class="notice hidden" role="status"></div>
+          <div id="pickupResult" class="pickup-result hidden"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="successScreen" class="view">
+      <div class="panel success-screen">
+        <div class="success-icon">✓</div>
+        <h2>Check-In Complete</h2>
+        <p id="successNames"></p>
+        <div class="pickup-code" id="successCode"></div>
+        <p>Keep this pickup code. Staff will use it when the child is picked up.</p>
+        <button id="newCheckinBtn" class="btn primary" type="button">Start New Check-In</button>
+      </div>
+    </section>
+  </main>
+
+  <script src="./js/config.js"></script>
+  <script src="./js/api.js"></script>
+  <script src="./js/app.js"></script>
+</body>
+</html>

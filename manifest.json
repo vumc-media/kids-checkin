@@ -1,0 +1,10 @@
+{
+  "name": "VUMC Kids Check-In",
+  "short_name": "VUMC Kids",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#eef3f8",
+  "theme_color": "#0b2a52",
+  "description": "VUMC Kids check-in and pickup kiosk."
+}
