@@ -10,6 +10,14 @@
   const $$ = (selector) => [...document.querySelectorAll(selector)];
 
   const refs = {
+    landingScreen: $("#landingScreen"),
+    appContent: $("#appContent"),
+    landingCheckinBtn: $("#landingCheckinBtn"),
+    landingGuestBtn: $("#landingGuestBtn"),
+    landingPickupBtn: $("#landingPickupBtn"),
+    landingBackendDot: $("#landingBackendDot"),
+    landingBackendText: $("#landingBackendText"),
+    homeBtn: $("#homeBtn"),
     backendDot: $("#backendDot"),
     backendText: $("#backendText"),
     searchInput: $("#searchInput"),
@@ -71,14 +79,46 @@
     if (navButton) navButton.classList.add("active");
   }
 
+  function openApp(viewId) {
+    refs.landingScreen.classList.add("hidden");
+    refs.appContent.classList.remove("hidden");
+    switchView(viewId);
+    window.scrollTo({ top: 0, behavior: "auto" });
+
+    window.setTimeout(() => {
+      if (viewId === "checkinView") refs.searchInput.focus();
+      if (viewId === "pickupView") refs.pickupCodeInput.focus();
+    }, 120);
+  }
+
+  function returnHome() {
+    refs.appContent.classList.add("hidden");
+    refs.landingScreen.classList.remove("hidden");
+
+    hideNotice(refs.checkinNotice);
+    hideNotice(refs.guestNotice);
+    hideNotice(refs.pickupNotice);
+
+    refs.pickupResult.classList.add("hidden");
+    refs.pickupResult.innerHTML = "";
+    refs.pickupCodeInput.value = "";
+    window.scrollTo({ top: 0, behavior: "auto" });
+  }
+
   async function checkBackend() {
     try {
       const result = await window.KidsAPI.health();
+      const message = result.message || "Backend online";
+
       refs.backendDot.className = "status-dot online";
-      refs.backendText.textContent = result.message || "Backend online";
+      refs.backendText.textContent = message;
+      refs.landingBackendDot.className = "status-dot online";
+      refs.landingBackendText.textContent = "Check-in service ready";
     } catch (error) {
       refs.backendDot.className = "status-dot offline";
       refs.backendText.textContent = "Backend unavailable";
+      refs.landingBackendDot.className = "status-dot offline";
+      refs.landingBackendText.textContent = "Check-in service unavailable";
     }
   }
 
@@ -308,6 +348,11 @@
   }
 
   function registerEvents() {
+    refs.landingCheckinBtn.addEventListener("click", () => openApp("checkinView"));
+    refs.landingGuestBtn.addEventListener("click", () => openApp("guestView"));
+    refs.landingPickupBtn.addEventListener("click", () => openApp("pickupView"));
+    refs.homeBtn.addEventListener("click", returnHome);
+
     $$(".nav-btn").forEach((button) => {
       button.addEventListener("click", () => switchView(button.dataset.view));
     });
@@ -347,7 +392,7 @@
       if (event.key === "Enter") verifyPickup();
     });
 
-    refs.newCheckinBtn.addEventListener("click", () => switchView("checkinView"));
+    refs.newCheckinBtn.addEventListener("click", returnHome);
   }
 
   async function init() {

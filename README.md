@@ -1,58 +1,29 @@
-# VUMC Kids Check-In v2
+# VUMC Kids Check-In — Branded Landing Edition
 
-This frontend connects to the existing Google Apps Script backend and provides:
+This is a complete drop-in replacement for the current GitHub Pages frontend.
 
-- Backend health status
-- Live Planning Center child roster
-- Search and multi-child selection
-- Attendance submission
-- Guest check-in
-- Pickup code verification and check-out
-- Installable PWA support
+## Included
 
-## Important limitation
+- Branded welcome screen
+- Returning-child check-in
+- First-time guest check-in
+- Pickup-code verification
+- Live Planning Center roster through GAS
+- Backend status on welcome and app screens
+- Home button
+- PWA caching
+- Logo at `media/vumc-kids-pco.png`
 
-The current GAS backend does not contain a staff authentication action. Do not place a staff PIN in public GitHub JavaScript. Add authentication to GAS later if kiosk locking is required.
+## Install
 
-## Installation
-
-1. Download and unzip this project.
-2. Open the `kids-checkin` GitHub repository.
-3. Remove or rename the broken root `index.html`.
-4. Upload all files and folders from this package to the repository root.
-5. Confirm GitHub Pages is set to:
-   - Source: Deploy from a branch
-   - Branch: `main`
-   - Folder: `/ (root)`
-6. Wait one to three minutes.
-7. Open:
-   `https://vumc-media.github.io/kids-checkin/`
-8. Hard refresh once:
+1. Unzip the package.
+2. Open `vumc-media/kids-checkin` on GitHub.
+3. Upload every file and folder from this package to the repository root.
+4. Replace existing files when prompted.
+5. Commit the changes.
+6. Wait for GitHub Pages to deploy.
+7. Hard refresh the kiosk:
    - Mac: Command + Shift + R
    - Windows: Ctrl + Shift + R
 
-## Testing order
-
-1. Confirm the header says `Backend online`.
-2. Confirm children load from Planning Center.
-3. Search for a child.
-4. Select one or more children.
-5. Click `Complete Check-In`.
-6. Record the displayed pickup code.
-7. Open the Pickup tab.
-8. Enter the pickup code.
-9. Confirm the names appear and the code is marked checked out.
-
-## Editing the GAS address
-
-The deployed GAS URL is stored only in:
-
-`js/config.js`
-
-## Deploying future changes
-
-Because this app uses a service worker, update the `CACHE_NAME` in `service-worker.js` whenever files change. For example:
-
-`vumc-kids-v2-2`
-
-This forces kiosk devices to download the latest version.
+The GAS URL remains in `js/config.js`.

@@ -10,6 +10,62 @@
   <title>VUMC Kids Check-In</title>
 </head>
 <body>
+  <section id="landingScreen" class="landing-screen" aria-labelledby="welcomeTitle">
+    <div class="landing-card">
+      <img
+        class="landing-logo"
+        src="./media/vumc-kids-pco.png"
+        alt="Versailles United Methodist Kids Ministry"
+      >
+
+      <div class="landing-copy">
+        <p class="landing-eyebrow">Welcome to</p>
+        <h1 id="welcomeTitle">VUMC Kids Check-In</h1>
+        <p>We're glad you're here. Select an option below to begin.</p>
+      </div>
+
+      <div class="landing-actions">
+        <button id="landingCheckinBtn" class="landing-action checkin-action" type="button">
+          <span class="landing-action-icon" aria-hidden="true">✓</span>
+          <span>
+            <strong>Check In Children</strong>
+            <small>Find returning children</small>
+          </span>
+        </button>
+
+        <button id="landingGuestBtn" class="landing-action guest-action" type="button">
+          <span class="landing-action-icon" aria-hidden="true">＋</span>
+          <span>
+            <strong>First Time Guest</strong>
+            <small>Register and check in a new child</small>
+          </span>
+        </button>
+
+        <button id="landingPickupBtn" class="landing-action pickup-action" type="button">
+          <span class="landing-action-icon" aria-hidden="true">→</span>
+          <span>
+            <strong>Pick Up Children</strong>
+            <small>Enter your pickup code</small>
+          </span>
+        </button>
+      </div>
+
+      <p class="landing-footer">
+        <span class="love">LOVE</span>
+        <span aria-hidden="true">•</span>
+        <span class="grow">GROW</span>
+        <span aria-hidden="true">•</span>
+        <span class="serve">SERVE</span>
+      </p>
+
+      <div class="landing-status" title="Backend connection status">
+        <span id="landingBackendDot" class="status-dot"></span>
+        <span id="landingBackendText">Connecting to check-in service…</span>
+      </div>
+    </div>
+  </section>
+
+  <div id="appContent" class="app-content hidden">
   <header class="app-header">
     <div class="brand">
       <div class="brand-mark" aria-hidden="true">✦</div>
@@ -19,9 +75,13 @@
       </div>
     </div>
 
-    <div class="backend-pill" title="Backend connection status">
-      <span id="backendDot" class="status-dot"></span>
-      <span id="backendText">Connecting…</span>
+    <div class="header-actions">
+      <button id="homeBtn" class="home-btn" type="button">Home</button>
+
+      <div class="backend-pill" title="Backend connection status">
+        <span id="backendDot" class="status-dot"></span>
+        <span id="backendText">Connecting…</span>
+      </div>
     </div>
   </header>
 
@@ -179,10 +239,12 @@
         <p id="successNames"></p>
         <div class="pickup-code" id="successCode"></div>
         <p>Keep this pickup code. Staff will use it when the child is picked up.</p>
-        <button id="newCheckinBtn" class="btn primary" type="button">Start New Check-In</button>
+        <button id="newCheckinBtn" class="btn primary" type="button">Return to Welcome Screen</button>
       </div>
     </section>
   </main>
+
+  </div>
 
   <script src="./js/config.js"></script>
   <script src="./js/api.js"></script>

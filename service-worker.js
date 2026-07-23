@@ -1,4 +1,4 @@
-const CACHE_NAME = "vumc-kids-v2-1";
+const CACHE_NAME = "vumc-kids-v2-landing-1";
 const APP_FILES = [
   "./",
   "./index.html",
@@ -6,7 +6,8 @@ const APP_FILES = [
   "./js/config.js",
   "./js/api.js",
   "./js/app.js",
-  "./manifest.json"
+  "./manifest.json",
+  "./media/vumc-kids-pco.png"
 ];
 
 self.addEventListener("install", (event) => {
