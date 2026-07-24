@@ -10,9 +10,9 @@
 <img class="landing-logo" src="./media/vumc-kids-pco.png" alt="Versailles United Methodist Kids Ministry">
 <div class="landing-copy"><p class="landing-eyebrow">Welcome to</p><h1>VUMC Kids Check-In</h1><p>We're glad you're here. Select an option below to begin.</p></div>
 <div class="landing-actions">
-<button id="landingCheckinBtn" class="landing-action checkin-action"><span class="landing-action-icon">✓</span><span><strong>Check In Children</strong><small>Find returning children</small></span></button>
+<button id="landingCheckinBtn" class="landing-action checkin-action"><span class="landing-action-icon">✓</span><span><strong>Check In</strong><small>Find returning children</small></span></button>
 <button id="landingGuestBtn" class="landing-action guest-action"><span class="landing-action-icon">＋</span><span><strong>First Time Guest</strong><small>Register and check in a new child</small></span></button>
-<button id="landingPickupBtn" class="landing-action pickup-action"><span class="landing-action-icon">→</span><span><strong>Pick Up Children</strong><small>Enter your pickup code</small></span></button>
+<button id="landingPickupBtn" class="landing-action pickup-action"><span class="landing-action-icon">→</span><span><strong>Pick Up</strong><small>Enter your pickup code</small></span></button>
 </div><p class="landing-footer"><span class="love">LOVE</span> • <span class="grow">GROW</span> • <span class="serve">SERVE</span></p>
 <div class="landing-status"><span id="landingBackendDot" class="status-dot"></span><span id="landingBackendText">Connecting to check-in service…</span></div>
 </div></section>
@@ -20,9 +20,9 @@
 <header class="app-header"><div class="brand"><div class="brand-mark">✦</div><div><h1>VUMC Kids</h1><p>Check-In</p></div></div>
 <div class="header-actions"><button id="homeBtn" class="home-btn">Home</button><div class="backend-pill"><span id="backendDot" class="status-dot"></span><span id="backendText">Connecting…</span></div></div></header>
 <main class="app-shell">
-<nav class="nav-tabs"><button class="nav-btn active" data-view="checkinView">Find Children</button><button class="nav-btn" data-view="guestView">Guest Check-In</button><button class="nav-btn" data-view="pickupView">Pickup</button></nav>
+<nav class="nav-tabs"><button class="nav-btn active" data-view="checkinView">Check Inn</button><button class="nav-btn" data-view="guestView">Guest Check-In</button><button class="nav-btn" data-view="pickupView">Pickup</button></nav>
 
-<section id="checkinView" class="view active"><div class="panel"><div class="panel-header"><div><h2>Find Children</h2><p>Search the Planning Center child roster, select one or more children, then check them in together.</p></div><button id="refreshRosterBtn" class="btn secondary">Refresh Roster</button></div>
+<section id="checkinView" class="view active"><div class="panel"><div class="panel-header"><div><h2>Search</h2><p>Search the Planning Center child roster, select one or more children, then check them in together.</p></div><button id="refreshRosterBtn" class="btn secondary">Refresh Roster</button></div>
 <div class="panel-body"><div class="toolbar search-toolbar"><div class="field"><label for="searchInput">Search child name or grade</label><input id="searchInput" type="search" placeholder="Start typing a name…" autocomplete="off"></div>
 <button id="clearSearchBtn" class="btn secondary">Clear</button></div>
 <div class="roster-layout"><div><div id="resultsList" class="results"><div class="empty">Loading the child roster…</div></div></div>
