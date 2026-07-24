@@ -331,7 +331,11 @@
   async function init() {
     bindRefs(); registerEvents(); renderSelected();
     await Promise.all([checkBackend(),loadRoster(false)]);
-    if("serviceWorker" in navigator) navigator.serviceWorker.register("./service-worker.js").catch(()=>{});
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("./service-worker.js", { updateViaCache: "none" })
+        .then(function (registration) { return registration.update(); })
+        .catch(function () {});
+    }
   }
   document.addEventListener("DOMContentLoaded",init);
 })();
