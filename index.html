@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0b2a52"><meta name="description" content="VUMC Kids Check-In kiosk">
-<link rel="manifest" href="./manifest.json"><link rel="stylesheet" href="./css/app.css?v=2.3.0"><link rel="stylesheet" href="./css/camera.css?v=2.3.0">
+<link rel="manifest" href="./manifest.json"><link rel="stylesheet" href="./css/app.css?v=2.4.0"><link rel="stylesheet" href="./css/camera.css?v=2.4.0">
 <title>VUMC Kids Check-In</title>
 </head><body>
 <section id="landingScreen" class="landing-screen"><div class="landing-card">
@@ -47,11 +47,13 @@
 <div class="camera-controls"><button id="captureBtn" class="btn primary">Take Photo</button><button id="switchCameraBtn" class="btn secondary">Switch Camera</button></div><div id="cameraNotice" class="notice hidden"></div></div>
 <aside><div id="savedPhotosPanel" class="saved-photo-panel hidden"><strong>Saved photos found</strong><p class="camera-note">Use these again, or take updated photos.</p>
 <button id="useSavedPhotosBtn" class="btn success full-btn">Use Saved Photos</button><button id="takeNewPhotosBtn" class="btn secondary full-btn">Take New Photos</button></div>
-<div class="photo-review"><div class="photo-card"><h3>Parent</h3><img id="parentPreview" class="hidden" alt="Parent preview"><button id="retakeParentBtn" class="btn secondary full-btn">Retake</button></div>
-<div class="photo-card"><h3>Child</h3><img id="childPreview" class="hidden" alt="Child preview"><button id="retakeChildBtn" class="btn secondary full-btn">Retake</button></div></div>
+<div class="photo-review">
+<div class="photo-card"><h3>Parent / Guardian</h3><img id="parentPreview" class="hidden" alt="Parent preview"><button id="retakeParentBtn" class="btn secondary full-btn">Retake Parent Photo</button></div>
+<div id="childPhotoList" class="child-photo-list"></div>
+</div>
 <div class="camera-actions"><button id="finishPhotoBtn" class="btn success full-btn">Save Photos & Finish</button><button id="skipPhotosBtn" class="btn secondary full-btn">Skip Photos This Time</button></div></aside></div></div></section>
 
 <section id="successScreen" class="view"><div class="panel success-screen"><div class="success-icon">✓</div><h2>Check-In Complete</h2><p id="successNames"></p><div class="pickup-code" id="successCode"></div><p>Keep this pickup code. Staff will use it when the child is picked up.</p><button id="newCheckinBtn" class="btn primary">Return to Welcome Screen</button></div></section>
 </main></div>
-<script src="./js/config.js?v=2.3.0"></script><script src="./js/api.js?v=2.3.0"></script><script src="./js/app.js?v=2.3.0"></script>
+<script src="./js/config.js?v=2.4.0"></script><script src="./js/api.js?v=2.4.0"></script><script src="./js/app.js?v=2.4.0"></script>
 </body></html>

@@ -8,10 +8,11 @@
     stream: null,
     facingMode: "user",
     captureTarget: "parent",
+    capturePersonId: "",
     parentPhoto: "",
-    childPhoto: "",
+    childPhotos: {},
     existingParentFileId: "",
-    existingChildFileId: ""
+    existingChildFileIds: {}
   };
 
   const $ = (s) => document.querySelector(s);
@@ -26,7 +27,7 @@
       "submitCheckinBtn","checkinNotice","guestForm","guestNotice","pickupCodeInput","verifyPickupBtn",
       "pickupNotice","pickupResult","successNames","successCode","newCheckinBtn","cameraView",
       "cameraVideo","cameraCanvas","cameraTitle","cameraHelp","cameraNotice","captureBtn","switchCameraBtn",
-      "retakeParentBtn","retakeChildBtn","parentPreview","childPreview","useSavedPhotosBtn",
+      "retakeParentBtn","parentPreview","childPhotoList","useSavedPhotosBtn",
       "takeNewPhotosBtn","finishPhotoBtn","skipPhotosBtn","savedPhotosPanel"
     ].forEach(id => refs[id] = document.getElementById(id));
   }
@@ -64,13 +65,12 @@
     stopCamera();
     state.pending = null;
     state.parentPhoto = "";
-    state.childPhoto = "";
+    state.childPhotos = {};
     state.existingParentFileId = "";
-    state.existingChildFileId = "";
+    state.existingChildFileIds = {};
     refs.parentPreview.removeAttribute("src");
-    refs.childPreview.removeAttribute("src");
     refs.parentPreview.classList.add("hidden");
-    refs.childPreview.classList.add("hidden");
+    refs.childPhotoList.innerHTML = "";
     refs.savedPhotosPanel.classList.add("hidden");
     hideNotice(refs.cameraNotice);
   }
@@ -154,37 +154,90 @@
     renderResults(state.people.filter(p=>[p.name,p.first_name,p.last_name,p.grade,p.phone].join(" ").toLowerCase().includes(q)));
   }
 
+  function renderChildPhotoCards() {
+    const people = state.pending ? state.pending.people : [];
+    refs.childPhotoList.innerHTML = people.map(function (person) {
+      const id = String(person.id);
+      const photo = state.childPhotos[id] || "";
+      return `
+        <div class="photo-card child-photo-card" data-person-id="${escapeHtml(id)}">
+          <h3>${escapeHtml(person.name)}</h3>
+          <img class="child-preview ${photo ? "" : "hidden"}" src="${photo ? escapeHtml(photo) : ""}" alt="${escapeHtml(person.name)} photo">
+          <button class="btn secondary full-btn retake-child-btn" type="button" data-person-id="${escapeHtml(id)}">
+            ${photo ? "Retake Child Photo" : "Take Child Photo"}
+          </button>
+        </div>`;
+    }).join("");
+  }
+
   async function beginPhotoStep(pending) {
     state.pending = pending;
+    state.parentPhoto = "";
+    state.childPhotos = {};
+    state.existingParentFileId = "";
+    state.existingChildFileIds = {};
+
     switchView("cameraView");
     window.scrollTo({top:0});
     refs.cameraTitle.textContent = "Photo Confirmation";
-    refs.cameraHelp.textContent = "Use saved photos or take updated parent and child photos.";
+    refs.cameraHelp.textContent = "Take one parent or guardian photo and a separate photo for each selected child.";
     refs.savedPhotosPanel.classList.add("hidden");
     hideNotice(refs.cameraNotice);
+    renderChildPhotoCards();
 
     try {
       const saved = await KidsAPI.getSavedPhotos(pending.people.map(p=>String(p.id)));
-      if (saved.parentPhotoData && saved.childPhotoData) {
-        state.existingParentFileId = saved.parentFileId || "";
-        state.existingChildFileId = saved.childFileId || "";
-        refs.parentPreview.src = saved.parentPhotoData;
-        refs.childPreview.src = saved.childPhotoData;
+      if (saved.parentFileId) {
+        state.existingParentFileId = saved.parentFileId;
+        state.parentPhoto = saved.parentPhotoData || "";
+      }
+
+      const savedChildren = saved.children || {};
+      pending.people.forEach(function (person) {
+        const id = String(person.id);
+        if (savedChildren[id] && savedChildren[id].fileId) {
+          state.existingChildFileIds[id] = savedChildren[id].fileId;
+          state.childPhotos[id] = savedChildren[id].photoData || "";
+        }
+      });
+
+      if (state.parentPhoto) {
+        refs.parentPreview.src = state.parentPhoto;
         refs.parentPreview.classList.remove("hidden");
-        refs.childPreview.classList.remove("hidden");
+      }
+      renderChildPhotoCards();
+
+      const allChildrenSaved = pending.people.every(p => Boolean(state.childPhotos[String(p.id)]));
+      if (state.parentPhoto && allChildrenSaved) {
         refs.savedPhotosPanel.classList.remove("hidden");
+        stopCamera();
         return;
       }
     } catch (_) {}
-    await startCamera("parent");
+
+    if (!state.parentPhoto) {
+      await startCamera("parent");
+    } else {
+      const missing = pending.people.find(p => !state.childPhotos[String(p.id)]);
+      if (missing) await startCamera("child", String(missing.id));
+    }
   }
 
-  async function startCamera(target) {
+  async function startCamera(target, personId="") {
     stopCamera();
     state.captureTarget = target;
+    state.capturePersonId = personId;
     refs.savedPhotosPanel.classList.add("hidden");
-    refs.cameraTitle.textContent = target === "parent" ? "Take Parent / Guardian Photo" : "Take Child Photo";
-    refs.cameraHelp.textContent = target === "parent" ? "Center the authorized pickup adult in the frame." : "Center the child or sibling group in the frame.";
+
+    if (target === "parent") {
+      refs.cameraTitle.textContent = "Take Parent / Guardian Photo";
+      refs.cameraHelp.textContent = "Center the authorized pickup adult in the frame.";
+    } else {
+      const person = state.pending.people.find(p => String(p.id) === String(personId));
+      refs.cameraTitle.textContent = `Take Photo: ${person ? person.name : "Child"}`;
+      refs.cameraHelp.textContent = "Take a separate photo for this child.";
+    }
+
     try {
       state.stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: { ideal: state.facingMode }, width:{ideal:1280}, height:{ideal:720} },
@@ -194,69 +247,89 @@
       await refs.cameraVideo.play();
       hideNotice(refs.cameraNotice);
     } catch(e) {
-      showNotice(refs.cameraNotice, "Camera access failed. Check browser camera permission, or choose Skip Photos.", "error");
+      showNotice(refs.cameraNotice, `${e.name || "CameraError"}: ${e.message || "Camera access failed."}`, "error");
     }
+  }
+
+  function nextMissingChild() {
+    return state.pending.people.find(p => !state.childPhotos[String(p.id)]);
   }
 
   function captureFrame() {
     const video=refs.cameraVideo, canvas=refs.cameraCanvas;
-    if (!video.videoWidth) { showNotice(refs.cameraNotice,"Camera is not ready yet.","error"); return; }
+    if (!video.videoWidth) {
+      showNotice(refs.cameraNotice,"Camera is not ready yet.","error");
+      return;
+    }
+
     const max=900, scale=Math.min(1,max/video.videoWidth);
-    canvas.width=Math.round(video.videoWidth*scale); canvas.height=Math.round(video.videoHeight*scale);
+    canvas.width=Math.round(video.videoWidth*scale);
+    canvas.height=Math.round(video.videoHeight*scale);
     canvas.getContext("2d").drawImage(video,0,0,canvas.width,canvas.height);
     const data=canvas.toDataURL("image/jpeg",0.78);
+
     if (state.captureTarget==="parent") {
-      state.parentPhoto=data; refs.parentPreview.src=data; refs.parentPreview.classList.remove("hidden");
-      startCamera("child");
+      state.parentPhoto=data;
+      state.existingParentFileId="";
+      refs.parentPreview.src=data;
+      refs.parentPreview.classList.remove("hidden");
+      const missing=nextMissingChild();
+      if (missing) startCamera("child", String(missing.id));
+      else stopCamera();
     } else {
-      state.childPhoto=data; refs.childPreview.src=data; refs.childPreview.classList.remove("hidden");
-      stopCamera(); refs.cameraTitle.textContent="Review Photos"; refs.cameraHelp.textContent="Retake either photo or save and finish check-in.";
+      const id=String(state.capturePersonId);
+      state.childPhotos[id]=data;
+      delete state.existingChildFileIds[id];
+      renderChildPhotoCards();
+      const missing=nextMissingChild();
+      if (missing) startCamera("child", String(missing.id));
+      else {
+        stopCamera();
+        refs.cameraTitle.textContent="Review Photos";
+        refs.cameraHelp.textContent="Confirm the parent photo and each child photo, then finalize check-in.";
+      }
     }
   }
 
   async function finishPhotos(useSaved=false) {
     if (!state.pending) return;
 
-    if (!useSaved && (!state.parentPhoto || !state.childPhoto)) {
-      showNotice(refs.cameraNotice, "Take both photos before continuing.", "error");
+    const people = state.pending.people;
+    const missingChild = people.find(p => !state.childPhotos[String(p.id)]);
+
+    if (!state.parentPhoto || missingChild) {
+      showNotice(
+        refs.cameraNotice,
+        !state.parentPhoto
+          ? "Take or select a parent / guardian photo before finalizing."
+          : `Take or select a photo for ${missingChild.name} before finalizing.`,
+        "error"
+      );
       return;
     }
 
-    setBusy(refs.finishPhotoBtn, true, "Completing check-in…");
-    setBusy(refs.useSavedPhotosBtn, true, "Completing check-in…");
-    setBusy(refs.skipPhotosBtn, true, "Completing check-in…");
+    setBusy(refs.finishPhotoBtn, true, "Finalizing check-in…");
+    setBusy(refs.useSavedPhotosBtn, true, "Finalizing check-in…");
+    setBusy(refs.skipPhotosBtn, true, "Finalizing check-in…");
 
     try {
-      let parentFileId = useSaved ? state.existingParentFileId : "";
-      let childFileId = useSaved ? state.existingChildFileId : "";
-
-      // New photos are uploaded first. Attendance is not recorded until both uploads succeed.
-      if (!useSaved) {
-        const staged = await KidsAPI.saveCheckinPhotos({
-          pickupCode: "",
-          personIds: state.pending.people.map(p => String(p.id)),
-          parentPhoto: state.parentPhoto,
-          childPhoto: state.childPhoto,
-          existingParentFileId: "",
-          existingChildFileId: ""
-        });
-        parentFileId = staged.parentFileId || "";
-        childFileId = staged.childFileId || "";
-      }
-
-      const result = await KidsAPI.submitAttendance(state.pending.submitPayload);
-      state.pending.pickupCode = result.pickupCode || "";
-
-      // Link the already-saved photos to this visit and its new pickup code.
-      await KidsAPI.saveCheckinPhotos({
-        pickupCode: state.pending.pickupCode,
-        personIds: state.pending.people.map(p => String(p.id)),
-        parentPhoto: "",
-        childPhoto: "",
-        existingParentFileId: parentFileId,
-        existingChildFileId: childFileId
+      const newChildPhotos = {};
+      people.forEach(function (person) {
+        const id = String(person.id);
+        if (!state.existingChildFileIds[id]) newChildPhotos[id] = state.childPhotos[id] || "";
       });
 
+      const result = await KidsAPI.finalizeCheckin({
+        people: state.pending.submitPayload.people,
+        noteText: state.pending.submitPayload.noteText,
+        label: state.pending.submitPayload.label,
+        parentPhoto: state.existingParentFileId ? "" : state.parentPhoto,
+        childPhotos: newChildPhotos,
+        existingParentFileId: state.existingParentFileId,
+        existingChildFileIds: state.existingChildFileIds
+      });
+
+      state.pending.pickupCode = result.pickupCode || "";
       showSuccess();
     } catch (e) {
       showNotice(refs.cameraNotice, e.message, "error");
@@ -269,7 +342,7 @@
 
   async function skipPhotosAndFinish() {
     if (!state.pending) return;
-    setBusy(refs.skipPhotosBtn, true, "Completing check-in…");
+    setBusy(refs.skipPhotosBtn, true, "Finalizing check-in…");
     hideNotice(refs.cameraNotice);
 
     try {
@@ -390,8 +463,8 @@
     refs.captureBtn.onclick=captureFrame;
     refs.switchCameraBtn.onclick=()=>{state.facingMode=state.facingMode==="user"?"environment":"user";startCamera(state.captureTarget);};
     refs.retakeParentBtn.onclick=()=>startCamera("parent");
-    refs.retakeChildBtn.onclick=()=>startCamera("child");
-    refs.takeNewPhotosBtn.onclick=()=>{state.existingParentFileId="";state.existingChildFileId="";startCamera("parent");};
+    refs.childPhotoList.onclick=e=>{const b=e.target.closest(".retake-child-btn");if(b)startCamera("child",String(b.dataset.personId));};
+    refs.takeNewPhotosBtn.onclick=()=>{state.existingParentFileId="";state.existingChildFileIds={};state.parentPhoto="";state.childPhotos={};refs.parentPreview.classList.add("hidden");renderChildPhotoCards();startCamera("parent");};
     refs.useSavedPhotosBtn.onclick=()=>finishPhotos(true);
     refs.finishPhotoBtn.onclick=()=>finishPhotos(false);
     refs.skipPhotosBtn.onclick=skipPhotosAndFinish;

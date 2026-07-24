@@ -59,3 +59,18 @@
 .selected-service-field select{
   width:100%;
 }
+
+
+/* v2.4 separate child photos */
+.photo-review{
+  display:block;
+}
+.child-photo-list{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+  gap:12px;
+  margin-top:12px;
+}
+.child-photo-card h3{
+  min-height:2.4em;
+}

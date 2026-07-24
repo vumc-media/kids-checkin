@@ -46,15 +46,18 @@
     }),
     verifyPickupCode: (pickupCode) => post({ action: "verifyPickupCode", pickupCode }),
     getSavedPhotos: (personIds) => post({ action: "getSavedPhotos", personIds }),
-    saveCheckinPhotos: ({ pickupCode, personIds, parentPhoto, childPhoto, existingParentFileId, existingChildFileId }) =>
+
+    finalizeCheckin: ({ people, noteText, label, isoDate, parentPhoto, childPhotos, existingParentFileId, existingChildFileIds }) =>
       post({
-        action: "saveCheckinPhotos",
-        pickupCode,
-        personIds,
+        action: "finalizeCheckin",
+        people,
+        noteText: noteText || "",
+        label: label || config.APP_NAME,
+        isoDate: isoDate || new Date().toISOString().slice(0, 10),
         parentPhoto: parentPhoto || "",
-        childPhoto: childPhoto || "",
+        childPhotos: childPhotos || {},
         existingParentFileId: existingParentFileId || "",
-        existingChildFileId: existingChildFileId || ""
+        existingChildFileIds: existingChildFileIds || {}
       })
   });
 })();
