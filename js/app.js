@@ -3,406 +3,310 @@
 
   const state = {
     people: [],
-    selected: new Map()
+    selected: new Map(),
+    pending: null,
+    stream: null,
+    facingMode: "user",
+    captureTarget: "parent",
+    parentPhoto: "",
+    childPhoto: "",
+    existingParentFileId: "",
+    existingChildFileId: ""
   };
 
-  const $ = (selector) => document.querySelector(selector);
-  const $$ = (selector) => [...document.querySelectorAll(selector)];
+  const $ = (s) => document.querySelector(s);
+  const $$ = (s) => [...document.querySelectorAll(s)];
+  const refs = {};
 
-  const refs = {
-    landingScreen: $("#landingScreen"),
-    appContent: $("#appContent"),
-    landingCheckinBtn: $("#landingCheckinBtn"),
-    landingGuestBtn: $("#landingGuestBtn"),
-    landingPickupBtn: $("#landingPickupBtn"),
-    landingBackendDot: $("#landingBackendDot"),
-    landingBackendText: $("#landingBackendText"),
-    homeBtn: $("#homeBtn"),
-    backendDot: $("#backendDot"),
-    backendText: $("#backendText"),
-    searchInput: $("#searchInput"),
-    serviceSelect: $("#serviceSelect"),
-    clearSearchBtn: $("#clearSearchBtn"),
-    refreshRosterBtn: $("#refreshRosterBtn"),
-    resultsList: $("#resultsList"),
-    selectedList: $("#selectedList"),
-    checkinNote: $("#checkinNote"),
-    submitCheckinBtn: $("#submitCheckinBtn"),
-    checkinNotice: $("#checkinNotice"),
-    guestForm: $("#guestForm"),
-    guestNotice: $("#guestNotice"),
-    pickupCodeInput: $("#pickupCodeInput"),
-    verifyPickupBtn: $("#verifyPickupBtn"),
-    pickupNotice: $("#pickupNotice"),
-    pickupResult: $("#pickupResult"),
-    successNames: $("#successNames"),
-    successCode: $("#successCode"),
-    newCheckinBtn: $("#newCheckinBtn")
-  };
-
-  function escapeHtml(value) {
-    return String(value ?? "")
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#039;");
+  function bindRefs() {
+    [
+      "landingScreen","appContent","landingCheckinBtn","landingGuestBtn","landingPickupBtn",
+      "landingBackendDot","landingBackendText","homeBtn","backendDot","backendText","searchInput",
+      "serviceSelect","clearSearchBtn","refreshRosterBtn","resultsList","selectedList","checkinNote",
+      "submitCheckinBtn","checkinNotice","guestForm","guestNotice","pickupCodeInput","verifyPickupBtn",
+      "pickupNotice","pickupResult","successNames","successCode","newCheckinBtn","cameraView",
+      "cameraVideo","cameraCanvas","cameraTitle","cameraHelp","cameraNotice","captureBtn","switchCameraBtn",
+      "retakeParentBtn","retakeChildBtn","parentPreview","childPreview","useSavedPhotosBtn",
+      "takeNewPhotosBtn","finishPhotoBtn","skipPhotosBtn","savedPhotosPanel"
+    ].forEach(id => refs[id] = document.getElementById(id));
   }
 
-  function showNotice(element, message, type = "") {
-    element.textContent = message;
-    element.className = `notice ${type}`.trim();
+  const escapeHtml = value => String(value ?? "")
+    .replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;").replaceAll("'","&#039;");
+
+  function showNotice(el, msg, type="") { el.textContent = msg; el.className = `notice ${type}`.trim(); }
+  function hideNotice(el) { el.textContent = ""; el.className = "notice hidden"; }
+  function setBusy(btn, busy, label) {
+    if (!btn.dataset.defaultLabel) btn.dataset.defaultLabel = btn.textContent;
+    btn.disabled = busy;
+    btn.textContent = busy ? label : btn.dataset.defaultLabel;
   }
-
-  function hideNotice(element) {
-    element.textContent = "";
-    element.className = "notice hidden";
+  function switchView(id) {
+    $$(".view").forEach(v => v.classList.remove("active"));
+    $$(".nav-btn").forEach(b => b.classList.remove("active"));
+    document.getElementById(id)?.classList.add("active");
+    $(`.nav-btn[data-view="${id}"]`)?.classList.add("active");
   }
-
-  function setBusy(button, busy, busyLabel) {
-    if (!button.dataset.defaultLabel) {
-      button.dataset.defaultLabel = button.textContent;
-    }
-
-    button.disabled = busy;
-    button.textContent = busy ? busyLabel : button.dataset.defaultLabel;
-  }
-
-  function switchView(viewId) {
-    $$(".view").forEach((view) => view.classList.remove("active"));
-    $$(".nav-btn").forEach((button) => button.classList.remove("active"));
-
-    const view = document.getElementById(viewId);
-    if (view) view.classList.add("active");
-
-    const navButton = $(`.nav-btn[data-view="${viewId}"]`);
-    if (navButton) navButton.classList.add("active");
-  }
-
-  function openApp(viewId) {
+  function openApp(id) {
     refs.landingScreen.classList.add("hidden");
     refs.appContent.classList.remove("hidden");
-    switchView(viewId);
-    window.scrollTo({ top: 0, behavior: "auto" });
-
-    window.setTimeout(() => {
-      if (viewId === "checkinView") refs.searchInput.focus();
-      if (viewId === "pickupView") refs.pickupCodeInput.focus();
-    }, 120);
+    switchView(id);
+    window.scrollTo({top:0});
+    setTimeout(() => id === "checkinView" ? refs.searchInput.focus() : id === "pickupView" && refs.pickupCodeInput.focus(), 120);
   }
-
+  function stopCamera() {
+    if (state.stream) state.stream.getTracks().forEach(t => t.stop());
+    state.stream = null;
+    if (refs.cameraVideo) refs.cameraVideo.srcObject = null;
+  }
+  function resetCameraState() {
+    stopCamera();
+    state.pending = null;
+    state.parentPhoto = "";
+    state.childPhoto = "";
+    state.existingParentFileId = "";
+    state.existingChildFileId = "";
+    refs.parentPreview.removeAttribute("src");
+    refs.childPreview.removeAttribute("src");
+    refs.parentPreview.classList.add("hidden");
+    refs.childPreview.classList.add("hidden");
+    refs.savedPhotosPanel.classList.add("hidden");
+    hideNotice(refs.cameraNotice);
+  }
   function returnHome() {
+    resetCameraState();
     refs.appContent.classList.add("hidden");
     refs.landingScreen.classList.remove("hidden");
-
-    hideNotice(refs.checkinNotice);
-    hideNotice(refs.guestNotice);
-    hideNotice(refs.pickupNotice);
-
+    [refs.checkinNotice,refs.guestNotice,refs.pickupNotice].forEach(hideNotice);
     refs.pickupResult.classList.add("hidden");
     refs.pickupResult.innerHTML = "";
     refs.pickupCodeInput.value = "";
-    window.scrollTo({ top: 0, behavior: "auto" });
+    window.scrollTo({top:0});
   }
-
   async function checkBackend() {
     try {
-      const result = await window.KidsAPI.health();
-      const message = result.message || "Backend online";
-
-      refs.backendDot.className = "status-dot online";
-      refs.backendText.textContent = message;
-      refs.landingBackendDot.className = "status-dot online";
-      refs.landingBackendText.textContent = "Check-in service ready";
-    } catch (error) {
-      refs.backendDot.className = "status-dot offline";
-      refs.backendText.textContent = "Backend unavailable";
-      refs.landingBackendDot.className = "status-dot offline";
-      refs.landingBackendText.textContent = "Check-in service unavailable";
+      const r = await KidsAPI.health(), m = r.message || "Backend online";
+      refs.backendDot.className = "status-dot online"; refs.backendText.textContent = m;
+      refs.landingBackendDot.className = "status-dot online"; refs.landingBackendText.textContent = "Check-in service ready";
+    } catch (_) {
+      refs.backendDot.className = "status-dot offline"; refs.backendText.textContent = "Backend unavailable";
+      refs.landingBackendDot.className = "status-dot offline"; refs.landingBackendText.textContent = "Check-in service unavailable";
     }
   }
-
-  async function loadRoster(forceRefresh = false) {
+  async function loadRoster(force=false) {
     refs.resultsList.innerHTML = '<div class="empty">Loading the child roster…</div>';
-    setBusy(refs.refreshRosterBtn, true, "Refreshing…");
-
+    setBusy(refs.refreshRosterBtn,true,"Refreshing…");
     try {
-      const result = await window.KidsAPI.getPeople(forceRefresh);
-      state.people = Array.isArray(result.rows) ? result.rows : [];
-      renderResults(state.people);
-    } catch (error) {
-      refs.resultsList.innerHTML =
-        `<div class="empty">Unable to load the roster.<br>${escapeHtml(error.message)}</div>`;
-    } finally {
-      setBusy(refs.refreshRosterBtn, false);
-    }
+      const r = await KidsAPI.getPeople(force);
+      state.people = Array.isArray(r.rows) ? r.rows : [];
+      filterRoster();
+    } catch(e) {
+      refs.resultsList.innerHTML = `<div class="empty">Unable to load the roster.<br>${escapeHtml(e.message)}</div>`;
+    } finally { setBusy(refs.refreshRosterBtn,false); }
   }
-
   function renderResults(rows) {
-    if (!rows.length) {
-      refs.resultsList.innerHTML =
-        '<div class="empty">No children matched your search.</div>';
-      return;
-    }
-
-    refs.resultsList.innerHTML = rows.map((person) => {
-      const selected = state.selected.has(String(person.id));
-      const meta = [person.grade, person.phone].filter(Boolean).join(" • ");
-
-      return `
-        <article class="person-card">
-          <div>
-            <div class="person-name">${escapeHtml(person.name || "Unnamed child")}</div>
-            <div class="person-meta">${escapeHtml(meta || "Planning Center child record")}</div>
-          </div>
-          <button
-            class="btn ${selected ? "danger" : "primary"} select-person"
-            type="button"
-            data-person-id="${escapeHtml(person.id)}"
-          >
-            ${selected ? "Remove" : "Select"}
-          </button>
-        </article>
-      `;
+    if (!rows.length) { refs.resultsList.innerHTML='<div class="empty">No children matched your search.</div>'; return; }
+    refs.resultsList.innerHTML = rows.map(p => {
+      const selected = state.selected.has(String(p.id));
+      const meta = [p.grade,p.phone].filter(Boolean).join(" • ");
+      return `<article class="person-card"><div><div class="person-name">${escapeHtml(p.name||"Unnamed child")}</div>
+      <div class="person-meta">${escapeHtml(meta||"Planning Center child record")}</div></div>
+      <button class="btn ${selected?"danger":"primary"} select-person" type="button" data-person-id="${escapeHtml(p.id)}">${selected?"Remove":"Select"}</button></article>`;
     }).join("");
   }
-
   function renderSelected() {
-    const people = [...state.selected.values()];
-
+    const people=[...state.selected.values()];
     if (!people.length) {
-      refs.selectedList.innerHTML =
-        '<div class="empty">No children selected.</div>';
-      refs.submitCheckinBtn.disabled = true;
-      return;
+      refs.selectedList.innerHTML='<div class="empty">No children selected.</div>';
+      refs.submitCheckinBtn.disabled=true; return;
     }
-
-    refs.selectedList.innerHTML = people.map((person) => `
-      <div class="selected-chip">
-        <span>${escapeHtml(person.name)}</span>
-        <button
-          class="btn danger remove-selected"
-          type="button"
-          data-person-id="${escapeHtml(person.id)}"
-          aria-label="Remove ${escapeHtml(person.name)}"
-        >×</button>
-      </div>
-    `).join("");
-
-    refs.submitCheckinBtn.disabled = false;
+    refs.selectedList.innerHTML=people.map(p=>`<div class="selected-chip"><span>${escapeHtml(p.name)}</span>
+      <button class="btn danger remove-selected" type="button" data-person-id="${escapeHtml(p.id)}">×</button></div>`).join("");
+    refs.submitCheckinBtn.disabled=false;
   }
-
-  function togglePerson(personId) {
-    const id = String(personId);
-    const person = state.people.find((item) => String(item.id) === id);
-
-    if (!person) return;
-
-    if (state.selected.has(id)) {
-      state.selected.delete(id);
-    } else {
-      state.selected.set(id, person);
-    }
-
-    filterRoster();
-    renderSelected();
+  function togglePerson(id) {
+    id=String(id); const p=state.people.find(x=>String(x.id)===id); if(!p)return;
+    state.selected.has(id)?state.selected.delete(id):state.selected.set(id,p);
+    filterRoster(); renderSelected();
   }
-
   function filterRoster() {
-    const query = refs.searchInput.value.trim().toLowerCase();
+    const q=refs.searchInput.value.trim().toLowerCase();
+    renderResults(state.people.filter(p=>[p.name,p.first_name,p.last_name,p.grade,p.phone].join(" ").toLowerCase().includes(q)));
+  }
 
-    const filtered = state.people.filter((person) => {
-      const haystack = [
-        person.name,
-        person.first_name,
-        person.last_name,
-        person.grade,
-        person.phone
-      ].join(" ").toLowerCase();
+  async function beginPhotoStep(pending) {
+    state.pending = pending;
+    switchView("cameraView");
+    window.scrollTo({top:0});
+    refs.cameraTitle.textContent = "Photo Confirmation";
+    refs.cameraHelp.textContent = "Use saved photos or take updated parent and child photos.";
+    refs.savedPhotosPanel.classList.add("hidden");
+    hideNotice(refs.cameraNotice);
 
-      return haystack.includes(query);
-    });
+    try {
+      const saved = await KidsAPI.getSavedPhotos(pending.people.map(p=>String(p.id)));
+      if (saved.parentPhotoData && saved.childPhotoData) {
+        state.existingParentFileId = saved.parentFileId || "";
+        state.existingChildFileId = saved.childFileId || "";
+        refs.parentPreview.src = saved.parentPhotoData;
+        refs.childPreview.src = saved.childPhotoData;
+        refs.parentPreview.classList.remove("hidden");
+        refs.childPreview.classList.remove("hidden");
+        refs.savedPhotosPanel.classList.remove("hidden");
+        return;
+      }
+    } catch (_) {}
+    await startCamera("parent");
+  }
 
-    renderResults(filtered);
+  async function startCamera(target) {
+    stopCamera();
+    state.captureTarget = target;
+    refs.savedPhotosPanel.classList.add("hidden");
+    refs.cameraTitle.textContent = target === "parent" ? "Take Parent / Guardian Photo" : "Take Child Photo";
+    refs.cameraHelp.textContent = target === "parent" ? "Center the authorized pickup adult in the frame." : "Center the child or sibling group in the frame.";
+    try {
+      state.stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: state.facingMode }, width:{ideal:1280}, height:{ideal:720} },
+        audio:false
+      });
+      refs.cameraVideo.srcObject = state.stream;
+      await refs.cameraVideo.play();
+      hideNotice(refs.cameraNotice);
+    } catch(e) {
+      showNotice(refs.cameraNotice, "Camera access failed. Check browser camera permission, or choose Skip Photos.", "error");
+    }
+  }
+
+  function captureFrame() {
+    const video=refs.cameraVideo, canvas=refs.cameraCanvas;
+    if (!video.videoWidth) { showNotice(refs.cameraNotice,"Camera is not ready yet.","error"); return; }
+    const max=900, scale=Math.min(1,max/video.videoWidth);
+    canvas.width=Math.round(video.videoWidth*scale); canvas.height=Math.round(video.videoHeight*scale);
+    canvas.getContext("2d").drawImage(video,0,0,canvas.width,canvas.height);
+    const data=canvas.toDataURL("image/jpeg",0.78);
+    if (state.captureTarget==="parent") {
+      state.parentPhoto=data; refs.parentPreview.src=data; refs.parentPreview.classList.remove("hidden");
+      startCamera("child");
+    } else {
+      state.childPhoto=data; refs.childPreview.src=data; refs.childPreview.classList.remove("hidden");
+      stopCamera(); refs.cameraTitle.textContent="Review Photos"; refs.cameraHelp.textContent="Retake either photo or save and finish check-in.";
+    }
+  }
+
+  async function finishPhotos(useSaved=false) {
+    if (!state.pending) return;
+    if (!useSaved && (!state.parentPhoto || !state.childPhoto)) {
+      showNotice(refs.cameraNotice,"Take both photos before continuing.","error"); return;
+    }
+    setBusy(refs.finishPhotoBtn,true,"Saving photos…");
+    setBusy(refs.useSavedPhotosBtn,true,"Using saved photos…");
+    try {
+      await KidsAPI.saveCheckinPhotos({
+        pickupCode: state.pending.pickupCode,
+        personIds: state.pending.people.map(p=>String(p.id)),
+        parentPhoto: useSaved ? "" : state.parentPhoto,
+        childPhoto: useSaved ? "" : state.childPhoto,
+        existingParentFileId: useSaved ? state.existingParentFileId : "",
+        existingChildFileId: useSaved ? state.existingChildFileId : ""
+      });
+      showSuccess();
+    } catch(e) { showNotice(refs.cameraNotice,e.message,"error"); }
+    finally {
+      setBusy(refs.finishPhotoBtn,false);
+      setBusy(refs.useSavedPhotosBtn,false);
+    }
+  }
+
+  function showSuccess() {
+    stopCamera();
+    const p=state.pending;
+    refs.successNames.textContent=p.people.map(x=>x.name).join(", ");
+    refs.successCode.textContent=p.pickupCode||"—";
+    if (p.afterSuccess) p.afterSuccess();
+    state.pending=null;
+    switchView("successScreen");
   }
 
   async function submitSelectedCheckin() {
-    const selectedPeople = [...state.selected.values()].map((person) => ({
-      id: String(person.id),
-      name: person.name
-    }));
-
-    if (!selectedPeople.length) return;
-
-    hideNotice(refs.checkinNotice);
-    setBusy(refs.submitCheckinBtn, true, "Submitting…");
-
+    const people=[...state.selected.values()].map(p=>({id:String(p.id),name:p.name}));
+    if(!people.length)return;
+    hideNotice(refs.checkinNotice); setBusy(refs.submitCheckinBtn,true,"Submitting…");
     try {
-      const result = await window.KidsAPI.submitAttendance({
-        people: selectedPeople,
-        noteText: refs.checkinNote.value.trim(),
-        label: refs.serviceSelect.value
+      const r=await KidsAPI.submitAttendance({people,noteText:refs.checkinNote.value.trim(),label:refs.serviceSelect.value});
+      await beginPhotoStep({
+        people, pickupCode:r.pickupCode,
+        afterSuccess() {
+          state.selected.clear(); refs.checkinNote.value=""; refs.searchInput.value="";
+          renderSelected(); renderResults(state.people);
+        }
       });
-
-      refs.successNames.textContent =
-        selectedPeople.map((person) => person.name).join(", ");
-      refs.successCode.textContent = result.pickupCode || "—";
-
-      state.selected.clear();
-      refs.checkinNote.value = "";
-      refs.searchInput.value = "";
-      renderSelected();
-      renderResults(state.people);
-      switchView("successScreen");
-    } catch (error) {
-      showNotice(refs.checkinNotice, error.message, "error");
-    } finally {
-      setBusy(refs.submitCheckinBtn, false);
-      refs.submitCheckinBtn.disabled = state.selected.size === 0;
-    }
+    } catch(e) { showNotice(refs.checkinNotice,e.message,"error"); }
+    finally { setBusy(refs.submitCheckinBtn,false); refs.submitCheckinBtn.disabled=state.selected.size===0; }
   }
 
   async function submitGuest(event) {
-    event.preventDefault();
-    hideNotice(refs.guestNotice);
-
-    const childFirst = $("#guestChildFirst").value.trim();
-    const childLast = $("#guestChildLast").value.trim();
-    const parentName = $("#guestParentName").value.trim();
-    const phone = $("#guestPhone").value.trim();
-    const grade = $("#guestGrade").value.trim();
-    const room = $("#guestRoom").value;
-    const notes = $("#guestNotes").value.trim();
-
-    if (!childFirst || !parentName || !phone) {
-      showNotice(
-        refs.guestNotice,
-        "Enter the child name, parent or guardian, and mobile number.",
-        "error"
-      );
-      return;
-    }
-
-    const fullName = [childFirst, childLast].filter(Boolean).join(" ");
-    const noteText = [
-      `Guest parent/guardian: ${parentName}`,
-      `Mobile: ${phone}`,
-      grade ? `Age/grade: ${grade}` : "",
-      notes ? `Notes: ${notes}` : ""
-    ].filter(Boolean).join("\n");
-
-    const submitButton = refs.guestForm.querySelector('button[type="submit"]');
-    setBusy(submitButton, true, "Submitting…");
-
+    event.preventDefault(); hideNotice(refs.guestNotice);
+    const childFirst=$("#guestChildFirst").value.trim(), childLast=$("#guestChildLast").value.trim();
+    const parentName=$("#guestParentName").value.trim(), phone=$("#guestPhone").value.trim();
+    const grade=$("#guestGrade").value.trim(), room=$("#guestRoom").value, notes=$("#guestNotes").value.trim();
+    if(!childFirst||!parentName||!phone){showNotice(refs.guestNotice,"Enter the child name, parent or guardian, and mobile number.","error");return;}
+    const fullName=[childFirst,childLast].filter(Boolean).join(" ");
+    const noteText=[`Guest parent/guardian: ${parentName}`,`Mobile: ${phone}`,grade?`Age/grade: ${grade}`:"",notes?`Notes: ${notes}`:""].filter(Boolean).join("\n");
+    const btn=refs.guestForm.querySelector('button[type="submit"]'); setBusy(btn,true,"Submitting…");
     try {
-      const result = await window.KidsAPI.submitAttendance({
-        people: [{ id: `guest-${Date.now()}`, name: fullName }],
-        noteText,
-        label: `${room} • Guest`
-      });
-
-      refs.successNames.textContent = fullName;
-      refs.successCode.textContent = result.pickupCode || "—";
-      refs.guestForm.reset();
-      switchView("successScreen");
-    } catch (error) {
-      showNotice(refs.guestNotice, error.message, "error");
-    } finally {
-      setBusy(submitButton, false);
-    }
+      const guestId=`guest-${Date.now()}`;
+      const r=await KidsAPI.submitAttendance({people:[{id:guestId,name:fullName}],noteText,label:`${room} • Guest`});
+      await beginPhotoStep({people:[{id:guestId,name:fullName}],pickupCode:r.pickupCode,afterSuccess(){refs.guestForm.reset();}});
+    } catch(e){showNotice(refs.guestNotice,e.message,"error");}
+    finally{setBusy(btn,false);}
   }
 
   async function verifyPickup() {
-    const code = refs.pickupCodeInput.value.trim().toUpperCase();
-
-    hideNotice(refs.pickupNotice);
-    refs.pickupResult.classList.add("hidden");
-    refs.pickupResult.innerHTML = "";
-
-    if (code.length !== 4) {
-      showNotice(refs.pickupNotice, "Enter the complete four-character pickup code.", "error");
-      return;
-    }
-
-    setBusy(refs.verifyPickupBtn, true, "Verifying…");
-
+    const code=refs.pickupCodeInput.value.trim().toUpperCase();
+    hideNotice(refs.pickupNotice); refs.pickupResult.classList.add("hidden"); refs.pickupResult.innerHTML="";
+    if(code.length!==4){showNotice(refs.pickupNotice,"Enter the complete four-character pickup code.","error");return;}
+    setBusy(refs.verifyPickupBtn,true,"Verifying…");
     try {
-      const result = await window.KidsAPI.verifyPickupCode(code);
-      const record = result.record || {};
-      const children = Array.isArray(record.children) ? record.children : [];
-
-      refs.pickupResult.innerHTML = `
-        <h3>Pickup Verified</h3>
-        <p><strong>Children:</strong> ${escapeHtml(children.join(", ") || "No names returned")}</p>
-        <p><strong>Code:</strong> ${escapeHtml(record.code || code)}</p>
-        <p><strong>Checked out:</strong> ${escapeHtml(record.checkedOutAt || "Completed")}</p>
-      `;
-      refs.pickupResult.classList.remove("hidden");
-      showNotice(refs.pickupNotice, result.message || "Pickup code verified.", "success");
-      refs.pickupCodeInput.value = "";
-    } catch (error) {
-      showNotice(refs.pickupNotice, error.message, "error");
-    } finally {
-      setBusy(refs.verifyPickupBtn, false);
-    }
+      const r=await KidsAPI.verifyPickupCode(code), record=r.record||{}, children=Array.isArray(record.children)?record.children:[];
+      refs.pickupResult.innerHTML=`<h3>Pickup Verified</h3><p><strong>Children:</strong> ${escapeHtml(children.join(", ")||"No names returned")}</p><p><strong>Code:</strong> ${escapeHtml(record.code||code)}</p><p><strong>Checked out:</strong> ${escapeHtml(record.checkedOutAt||"Completed")}</p>`;
+      refs.pickupResult.classList.remove("hidden"); showNotice(refs.pickupNotice,r.message||"Pickup code verified.","success"); refs.pickupCodeInput.value="";
+    } catch(e){showNotice(refs.pickupNotice,e.message,"error");}
+    finally{setBusy(refs.verifyPickupBtn,false);}
   }
 
   function registerEvents() {
-    refs.landingCheckinBtn.addEventListener("click", () => openApp("checkinView"));
-    refs.landingGuestBtn.addEventListener("click", () => openApp("guestView"));
-    refs.landingPickupBtn.addEventListener("click", () => openApp("pickupView"));
-    refs.homeBtn.addEventListener("click", returnHome);
-
-    $$(".nav-btn").forEach((button) => {
-      button.addEventListener("click", () => switchView(button.dataset.view));
-    });
-
-    refs.searchInput.addEventListener("input", filterRoster);
-
-    refs.clearSearchBtn.addEventListener("click", () => {
-      refs.searchInput.value = "";
-      filterRoster();
-      refs.searchInput.focus();
-    });
-
-    refs.refreshRosterBtn.addEventListener("click", () => loadRoster(true));
-
-    refs.resultsList.addEventListener("click", (event) => {
-      const button = event.target.closest(".select-person");
-      if (button) togglePerson(button.dataset.personId);
-    });
-
-    refs.selectedList.addEventListener("click", (event) => {
-      const button = event.target.closest(".remove-selected");
-      if (button) togglePerson(button.dataset.personId);
-    });
-
-    refs.submitCheckinBtn.addEventListener("click", submitSelectedCheckin);
-    refs.guestForm.addEventListener("submit", submitGuest);
-    refs.verifyPickupBtn.addEventListener("click", verifyPickup);
-
-    refs.pickupCodeInput.addEventListener("input", () => {
-      refs.pickupCodeInput.value = refs.pickupCodeInput.value
-        .toUpperCase()
-        .replace(/[^A-Z0-9]/g, "")
-        .slice(0, 4);
-    });
-
-    refs.pickupCodeInput.addEventListener("keydown", (event) => {
-      if (event.key === "Enter") verifyPickup();
-    });
-
-    refs.newCheckinBtn.addEventListener("click", returnHome);
+    refs.landingCheckinBtn.onclick=()=>openApp("checkinView");
+    refs.landingGuestBtn.onclick=()=>openApp("guestView");
+    refs.landingPickupBtn.onclick=()=>openApp("pickupView");
+    refs.homeBtn.onclick=returnHome;
+    $$(".nav-btn").forEach(b=>b.onclick=()=>switchView(b.dataset.view));
+    refs.searchInput.oninput=filterRoster;
+    refs.clearSearchBtn.onclick=()=>{refs.searchInput.value="";filterRoster();refs.searchInput.focus();};
+    refs.refreshRosterBtn.onclick=()=>loadRoster(true);
+    refs.resultsList.onclick=e=>{const b=e.target.closest(".select-person");if(b)togglePerson(b.dataset.personId);};
+    refs.selectedList.onclick=e=>{const b=e.target.closest(".remove-selected");if(b)togglePerson(b.dataset.personId);};
+    refs.submitCheckinBtn.onclick=submitSelectedCheckin;
+    refs.guestForm.onsubmit=submitGuest;
+    refs.verifyPickupBtn.onclick=verifyPickup;
+    refs.pickupCodeInput.oninput=()=>refs.pickupCodeInput.value=refs.pickupCodeInput.value.toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,4);
+    refs.pickupCodeInput.onkeydown=e=>{if(e.key==="Enter")verifyPickup();};
+    refs.newCheckinBtn.onclick=returnHome;
+    refs.captureBtn.onclick=captureFrame;
+    refs.switchCameraBtn.onclick=()=>{state.facingMode=state.facingMode==="user"?"environment":"user";startCamera(state.captureTarget);};
+    refs.retakeParentBtn.onclick=()=>startCamera("parent");
+    refs.retakeChildBtn.onclick=()=>startCamera("child");
+    refs.takeNewPhotosBtn.onclick=()=>{state.existingParentFileId="";state.existingChildFileId="";startCamera("parent");};
+    refs.useSavedPhotosBtn.onclick=()=>finishPhotos(true);
+    refs.finishPhotoBtn.onclick=()=>finishPhotos(false);
+    refs.skipPhotosBtn.onclick=showSuccess;
   }
 
   async function init() {
-    registerEvents();
-    await Promise.all([checkBackend(), loadRoster(false)]);
-
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("./service-worker.js").catch(() => {});
-    }
+    bindRefs(); registerEvents(); renderSelected();
+    await Promise.all([checkBackend(),loadRoster(false)]);
+    if("serviceWorker" in navigator) navigator.serviceWorker.register("./service-worker.js").catch(()=>{});
   }
-
-  document.addEventListener("DOMContentLoaded", init);
+  document.addEventListener("DOMContentLoaded",init);
 })();
