@@ -22,7 +22,7 @@
     [
       "landingScreen","appContent","landingCheckinBtn","landingGuestBtn","landingPickupBtn",
       "landingBackendDot","landingBackendText","homeBtn","backendDot","backendText","searchInput",
-      "serviceSelect","clearSearchBtn","refreshRosterBtn","resultsList","selectedList","checkinNote",
+      "clearSearchBtn","refreshRosterBtn","resultsList","selectedList","checkinNote",
       "submitCheckinBtn","checkinNotice","guestForm","guestNotice","pickupCodeInput","verifyPickupBtn",
       "pickupNotice","pickupResult","successNames","successCode","newCheckinBtn","cameraView",
       "cameraVideo","cameraCanvas","cameraTitle","cameraHelp","cameraNotice","captureBtn","switchCameraBtn",
@@ -121,13 +121,32 @@
       refs.selectedList.innerHTML='<div class="empty">No children selected.</div>';
       refs.submitCheckinBtn.disabled=true; return;
     }
-    refs.selectedList.innerHTML=people.map(p=>`<div class="selected-chip"><span>${escapeHtml(p.name)}</span>
-      <button class="btn danger remove-selected" type="button" data-person-id="${escapeHtml(p.id)}">×</button></div>`).join("");
+    refs.selectedList.innerHTML=people.map(p=>`
+      <div class="selected-child-card">
+        <div class="selected-child-header">
+          <strong>${escapeHtml(p.name)}</strong>
+          <button class="btn danger remove-selected" type="button" data-person-id="${escapeHtml(p.id)}" aria-label="Remove ${escapeHtml(p.name)}">×</button>
+        </div>
+        <div class="field selected-service-field">
+          <label for="service-${escapeHtml(p.id)}">Service / Event</label>
+          <select class="child-service-select" id="service-${escapeHtml(p.id)}" data-person-id="${escapeHtml(p.id)}">
+            <option value="Sunday School" ${(p.service||"Sunday School")==="Sunday School"?"selected":""}>Sunday School</option>
+            <option value="Children's Church" ${p.service==="Children's Church"?"selected":""}>Children's Church</option>
+            <option value="Nursery" ${p.service==="Nursery"?"selected":""}>Nursery</option>
+            <option value="Wednesday Kids" ${p.service==="Wednesday Kids"?"selected":""}>Wednesday Kids</option>
+            <option value="Other / General" ${p.service==="Other / General"?"selected":""}>Other / General</option>
+          </select>
+        </div>
+      </div>`).join("");
     refs.submitCheckinBtn.disabled=false;
   }
   function togglePerson(id) {
     id=String(id); const p=state.people.find(x=>String(x.id)===id); if(!p)return;
-    state.selected.has(id)?state.selected.delete(id):state.selected.set(id,p);
+    if (state.selected.has(id)) {
+      state.selected.delete(id);
+    } else {
+      state.selected.set(id, Object.assign({}, p, { service: p.service || "Sunday School" }));
+    }
     filterRoster(); renderSelected();
   }
   function filterRoster() {
@@ -230,11 +249,11 @@
   }
 
   async function submitSelectedCheckin() {
-    const people=[...state.selected.values()].map(p=>({id:String(p.id),name:p.name}));
+    const people=[...state.selected.values()].map(p=>({id:String(p.id),name:p.name,service:p.service||"Sunday School"}));
     if(!people.length)return;
     hideNotice(refs.checkinNotice); setBusy(refs.submitCheckinBtn,true,"Submitting…");
     try {
-      const r=await KidsAPI.submitAttendance({people,noteText:refs.checkinNote.value.trim(),label:refs.serviceSelect.value});
+      const r=await KidsAPI.submitAttendance({people,noteText:refs.checkinNote.value.trim(),label:"Multiple Services"});
       await beginPhotoStep({
         people, pickupCode:r.pickupCode,
         afterSuccess() {
@@ -287,6 +306,12 @@
     refs.refreshRosterBtn.onclick=()=>loadRoster(true);
     refs.resultsList.onclick=e=>{const b=e.target.closest(".select-person");if(b)togglePerson(b.dataset.personId);};
     refs.selectedList.onclick=e=>{const b=e.target.closest(".remove-selected");if(b)togglePerson(b.dataset.personId);};
+    refs.selectedList.onchange=e=>{
+      const select=e.target.closest(".child-service-select");
+      if(!select)return;
+      const person=state.selected.get(String(select.dataset.personId));
+      if(person) person.service=select.value;
+    };
     refs.submitCheckinBtn.onclick=submitSelectedCheckin;
     refs.guestForm.onsubmit=submitGuest;
     refs.verifyPickupBtn.onclick=verifyPickup;

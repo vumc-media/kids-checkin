@@ -32,3 +32,30 @@
     overflow:visible;
   }
 }
+
+
+/* v2.2 per-child service assignments */
+.selected-child-card{
+  border:1px solid #cfd9e6;
+  border-radius:14px;
+  padding:12px;
+  background:#fff;
+  margin-bottom:12px;
+}
+.selected-child-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:10px;
+}
+.selected-child-header strong{
+  color:#0b2a52;
+  font-size:1rem;
+}
+.selected-service-field{
+  margin:0;
+}
+.selected-service-field select{
+  width:100%;
+}
