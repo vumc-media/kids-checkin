@@ -216,25 +216,70 @@
 
   async function finishPhotos(useSaved=false) {
     if (!state.pending) return;
+
     if (!useSaved && (!state.parentPhoto || !state.childPhoto)) {
-      showNotice(refs.cameraNotice,"Take both photos before continuing.","error"); return;
+      showNotice(refs.cameraNotice, "Take both photos before continuing.", "error");
+      return;
     }
-    setBusy(refs.finishPhotoBtn,true,"Saving photos…");
-    setBusy(refs.useSavedPhotosBtn,true,"Using saved photos…");
+
+    setBusy(refs.finishPhotoBtn, true, "Completing check-in…");
+    setBusy(refs.useSavedPhotosBtn, true, "Completing check-in…");
+    setBusy(refs.skipPhotosBtn, true, "Completing check-in…");
+
     try {
+      let parentFileId = useSaved ? state.existingParentFileId : "";
+      let childFileId = useSaved ? state.existingChildFileId : "";
+
+      // New photos are uploaded first. Attendance is not recorded until both uploads succeed.
+      if (!useSaved) {
+        const staged = await KidsAPI.saveCheckinPhotos({
+          pickupCode: "",
+          personIds: state.pending.people.map(p => String(p.id)),
+          parentPhoto: state.parentPhoto,
+          childPhoto: state.childPhoto,
+          existingParentFileId: "",
+          existingChildFileId: ""
+        });
+        parentFileId = staged.parentFileId || "";
+        childFileId = staged.childFileId || "";
+      }
+
+      const result = await KidsAPI.submitAttendance(state.pending.submitPayload);
+      state.pending.pickupCode = result.pickupCode || "";
+
+      // Link the already-saved photos to this visit and its new pickup code.
       await KidsAPI.saveCheckinPhotos({
         pickupCode: state.pending.pickupCode,
-        personIds: state.pending.people.map(p=>String(p.id)),
-        parentPhoto: useSaved ? "" : state.parentPhoto,
-        childPhoto: useSaved ? "" : state.childPhoto,
-        existingParentFileId: useSaved ? state.existingParentFileId : "",
-        existingChildFileId: useSaved ? state.existingChildFileId : ""
+        personIds: state.pending.people.map(p => String(p.id)),
+        parentPhoto: "",
+        childPhoto: "",
+        existingParentFileId: parentFileId,
+        existingChildFileId: childFileId
       });
+
       showSuccess();
-    } catch(e) { showNotice(refs.cameraNotice,e.message,"error"); }
-    finally {
-      setBusy(refs.finishPhotoBtn,false);
-      setBusy(refs.useSavedPhotosBtn,false);
+    } catch (e) {
+      showNotice(refs.cameraNotice, e.message, "error");
+    } finally {
+      setBusy(refs.finishPhotoBtn, false);
+      setBusy(refs.useSavedPhotosBtn, false);
+      setBusy(refs.skipPhotosBtn, false);
+    }
+  }
+
+  async function skipPhotosAndFinish() {
+    if (!state.pending) return;
+    setBusy(refs.skipPhotosBtn, true, "Completing check-in…");
+    hideNotice(refs.cameraNotice);
+
+    try {
+      const result = await KidsAPI.submitAttendance(state.pending.submitPayload);
+      state.pending.pickupCode = result.pickupCode || "";
+      showSuccess();
+    } catch (e) {
+      showNotice(refs.cameraNotice, e.message, "error");
+    } finally {
+      setBusy(refs.skipPhotosBtn, false);
     }
   }
 
@@ -249,20 +294,39 @@
   }
 
   async function submitSelectedCheckin() {
-    const people=[...state.selected.values()].map(p=>({id:String(p.id),name:p.name,service:p.service||"Sunday School"}));
+    const people=[...state.selected.values()].map(p=>({
+      id:String(p.id),
+      name:p.name,
+      service:p.service||"Sunday School"
+    }));
     if(!people.length)return;
-    hideNotice(refs.checkinNotice); setBusy(refs.submitCheckinBtn,true,"Submitting…");
+
+    hideNotice(refs.checkinNotice);
+    setBusy(refs.submitCheckinBtn,true,"Opening camera…");
+
     try {
-      const r=await KidsAPI.submitAttendance({people,noteText:refs.checkinNote.value.trim(),label:"Multiple Services"});
       await beginPhotoStep({
-        people, pickupCode:r.pickupCode,
+        people,
+        pickupCode:"",
+        submitPayload:{
+          people,
+          noteText:refs.checkinNote.value.trim(),
+          label:"Multiple Services"
+        },
         afterSuccess() {
-          state.selected.clear(); refs.checkinNote.value=""; refs.searchInput.value="";
-          renderSelected(); renderResults(state.people);
+          state.selected.clear();
+          refs.checkinNote.value="";
+          refs.searchInput.value="";
+          renderSelected();
+          renderResults(state.people);
         }
       });
-    } catch(e) { showNotice(refs.checkinNotice,e.message,"error"); }
-    finally { setBusy(refs.submitCheckinBtn,false); refs.submitCheckinBtn.disabled=state.selected.size===0; }
+    } catch(e) {
+      showNotice(refs.checkinNotice,e.message,"error");
+    } finally {
+      setBusy(refs.submitCheckinBtn,false);
+      refs.submitCheckinBtn.disabled=state.selected.size===0;
+    }
   }
 
   async function submitGuest(event) {
@@ -276,8 +340,13 @@
     const btn=refs.guestForm.querySelector('button[type="submit"]'); setBusy(btn,true,"Submitting…");
     try {
       const guestId=`guest-${Date.now()}`;
-      const r=await KidsAPI.submitAttendance({people:[{id:guestId,name:fullName}],noteText,label:`${room} • Guest`});
-      await beginPhotoStep({people:[{id:guestId,name:fullName}],pickupCode:r.pickupCode,afterSuccess(){refs.guestForm.reset();}});
+      const people=[{id:guestId,name:fullName,service:room}];
+      await beginPhotoStep({
+        people,
+        pickupCode:"",
+        submitPayload:{people,noteText,label:`${room} • Guest`},
+        afterSuccess(){refs.guestForm.reset();}
+      });
     } catch(e){showNotice(refs.guestNotice,e.message,"error");}
     finally{setBusy(btn,false);}
   }
@@ -325,7 +394,7 @@
     refs.takeNewPhotosBtn.onclick=()=>{state.existingParentFileId="";state.existingChildFileId="";startCamera("parent");};
     refs.useSavedPhotosBtn.onclick=()=>finishPhotos(true);
     refs.finishPhotoBtn.onclick=()=>finishPhotos(false);
-    refs.skipPhotosBtn.onclick=showSuccess;
+    refs.skipPhotosBtn.onclick=skipPhotosAndFinish;
   }
 
   async function init() {
