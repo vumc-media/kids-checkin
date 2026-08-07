@@ -203,29 +203,23 @@
 
       <div class="header-actions">
 
-        <button
-          id="homeBtn"
-          class="home-btn"
-          type="button"
-        >
-          Home
-        </button>
+  <button id="homeBtn" class="home-btn">
+    Home
+  </button>
 
+  <button
+      id="refreshRosterBtn"
+      class="icon-btn"
+      title="Refresh Planning Center Roster">
+      ↻
+  </button>
 
-        <div class="backend-pill">
+  <div class="backend-pill">
+      <span id="backendDot" class="status-dot"></span>
+      <span id="backendText">Connecting…</span>
+  </div>
 
-          <span
-            id="backendDot"
-            class="status-dot"
-          ></span>
-
-          <span id="backendText">
-            Connecting…
-          </span>
-
-        </div>
-
-      </div>
+</div>
 
     </header>
 
@@ -285,12 +279,11 @@
             <div>
 
               <h2>
-                Find Your Family
+                Returning Family Check-In
               </h2>
 
               <p>
-                Search by child, parent, guardian,
-                household name, or grade.
+                Search by last name, parent, guardian, or child.
               </p>
 
             </div>
@@ -314,13 +307,13 @@
               <div class="field">
 
                 <label for="searchInput">
-                  Search Planning Center
+                  Search Family
                 </label>
 
                 <input
                   id="searchInput"
                   type="search"
-                  placeholder="Start typing a family or child name…"
+                  placeholder="Type a last name..."
                   autocomplete="off"
                 >
 
@@ -361,7 +354,7 @@
               >
 
                 <h3>
-                  Selected Children
+Today's Check-In
                 </h3>
 
 
