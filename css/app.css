@@ -511,3 +511,38 @@ button{cursor:pointer}
     grid-template-columns: repeat(5, minmax(0, 1fr));
   }
 }
+
+/* ===========================================
+   Header Refresh Button
+   =========================================== */
+
+.icon-btn{
+    width:42px;
+    height:42px;
+
+    display:grid;
+    place-items:center;
+
+    border:none;
+    border-radius:50%;
+
+    background:rgba(255,255,255,.14);
+
+    color:#fff;
+
+    font-size:22px;
+    font-weight:700;
+
+    transition:.18s;
+}
+
+.icon-btn:hover{
+    background:rgba(255,255,255,.24);
+    transform:rotate(90deg);
+}
+
+.icon-btn:disabled{
+    opacity:.45;
+    transform:none;
+    cursor:not-allowed;
+}
