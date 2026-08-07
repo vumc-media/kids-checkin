@@ -1,10 +1,358 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#16324f"><meta name="robots" content="noindex,nofollow"><title>VUMC Kids Admin</title><link rel="stylesheet" href="admin.css"></head><body>
-<header class="topbar"><div><strong>VUMC Kids</strong><span>Admin Panel</span></div><a href="../" class="kiosk-link">Return to Kiosk</a></header>
-<main class="shell"><section id="loginPanel" class="card login-card"><h1>Staff Sign In</h1><p>Enter the admin PIN stored in Apps Script.</p><form id="loginForm"><label for="pin">Admin PIN</label><input id="pin" name="pin" type="password" inputmode="numeric" autocomplete="current-password" required><button type="submit">Open Admin Panel</button></form><div id="loginStatus" class="status"></div></section>
-<section id="dashboard" hidden><div class="dashboard-head"><div><h1>Kids Check-In Dashboard</h1><p id="lastUpdated">Not loaded yet</p></div><div class="head-actions"><button id="refreshBtn" class="secondary">Refresh</button><button id="logoutBtn" class="danger-outline">Sign Out</button></div></div>
-<div class="stats"><article class="stat"><span>Active Families</span><strong id="activeFamilies">0</strong></article><article class="stat"><span>Children On Site</span><strong id="childrenOnSite">0</strong></article><article class="stat"><span>Checked Out Today</span><strong id="checkedOutToday">0</strong></article><article class="stat"><span>Total Today</span><strong id="totalToday">0</strong></article></div>
-<nav class="tabs"><button class="tab active" data-tab="active">Active Check-Ins</button><button class="tab" data-tab="history">History</button><button class="tab" data-tab="tools">Roster Tools</button></nav>
-<section id="activeTab" class="tab-panel card"><div class="section-head"><div><h2>Active Check-Ins</h2><p>Families whose pickup code has not been checked out.</p></div><input id="activeSearch" class="search" placeholder="Search child or code"></div><div id="activeList" class="records"></div></section>
-<section id="historyTab" class="tab-panel card" hidden><div class="section-head"><div><h2>Check-In History</h2><p>Permanent records saved in the Google Sheet.</p></div><div class="filters"><input id="historyDate" type="date"><input id="historySearch" class="search" placeholder="Search child or code"><button id="exportBtn" class="secondary">Export CSV</button></div></div><div id="historyList" class="records"></div></section>
-<section id="toolsTab" class="tab-panel card" hidden><h2>Roster Tools</h2><p>Use these only when Planning Center records have changed.</p><div class="tool-grid"><button id="refreshRosterBtn">Refresh Planning Center Roster</button><button id="initializeSheetBtn" class="secondary">Initialize Sheet Tabs</button></div><div id="toolsStatus" class="status"></div></section></section></main><div id="toast" class="toast"></div>
-<script>window.VUMC_ADMIN_CONFIG={scriptUrl:"https://script.google.com/macros/s/AKfycbwkn7gc4YiQ93wvL6dzazkzXkobZfGv6SjKQKgwLpawQwgaigB0Fal8-0WDOyG-RePj/exec"};</script><script src="admin.js"></script></body></html>
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width,initial-scale=1,viewport-fit=cover"
+  >
+
+  <meta
+    name="theme-color"
+    content="#16324f"
+  >
+
+  <meta
+    name="robots"
+    content="noindex,nofollow"
+  >
+
+  <title>VUMC Kids Admin</title>
+
+  <link
+    rel="stylesheet"
+    href="admin.css"
+  >
+</head>
+
+<body>
+
+<header class="topbar">
+
+  <div>
+    <strong>VUMC Kids</strong>
+    <span>Admin Panel</span>
+  </div>
+
+  <a
+    href="../"
+    class="kiosk-link"
+  >
+    Return to Kiosk
+  </a>
+
+</header>
+
+
+<main class="shell">
+
+  <!-- LOGIN -->
+
+  <section
+    id="loginPanel"
+    class="card login-card"
+  >
+
+    <h1>Staff Sign In</h1>
+
+    <p>
+      Enter the administrator PIN stored in
+      Google Apps Script.
+    </p>
+
+    <form id="loginForm">
+
+      <label for="pin">
+        Admin PIN
+      </label>
+
+      <input
+        id="pin"
+        name="pin"
+        type="password"
+        inputmode="text"
+        autocomplete="current-password"
+        autocapitalize="none"
+        autocorrect="off"
+        spellcheck="false"
+        required
+      >
+
+      <button type="submit">
+        Open Admin Panel
+      </button>
+
+    </form>
+
+    <div
+      id="loginStatus"
+      class="status"
+    ></div>
+
+  </section>
+
+
+
+  <!-- DASHBOARD -->
+
+  <section
+    id="dashboard"
+    hidden
+  >
+
+    <div class="dashboard-head">
+
+      <div>
+
+        <h1>
+          Kids Check-In Dashboard
+        </h1>
+
+        <p id="lastUpdated">
+          Not loaded yet
+        </p>
+
+      </div>
+
+      <div class="head-actions">
+
+        <button
+          id="refreshBtn"
+          class="secondary"
+        >
+          Refresh
+        </button>
+
+        <button
+          id="logoutBtn"
+          class="danger-outline"
+        >
+          Sign Out
+        </button>
+
+      </div>
+
+    </div>
+
+
+
+    <!-- STATS -->
+
+    <div class="stats">
+
+      <article class="stat">
+        <span>Active Families</span>
+        <strong id="activeFamilies">0</strong>
+      </article>
+
+      <article class="stat">
+        <span>Children On Site</span>
+        <strong id="childrenOnSite">0</strong>
+      </article>
+
+      <article class="stat">
+        <span>Checked Out Today</span>
+        <strong id="checkedOutToday">0</strong>
+      </article>
+
+      <article class="stat">
+        <span>Total Today</span>
+        <strong id="totalToday">0</strong>
+      </article>
+
+    </div>
+
+
+
+    <!-- TABS -->
+
+    <nav class="tabs">
+
+      <button
+        class="tab active"
+        data-tab="active"
+      >
+        Active Check-Ins
+      </button>
+
+      <button
+        class="tab"
+        data-tab="history"
+      >
+        History
+      </button>
+
+      <button
+        class="tab"
+        data-tab="tools"
+      >
+        Roster Tools
+      </button>
+
+    </nav>
+
+
+
+    <!-- ACTIVE -->
+
+    <section
+      id="activeTab"
+      class="tab-panel card"
+    >
+
+      <div class="section-head">
+
+        <div>
+
+          <h2>
+            Active Check-Ins
+          </h2>
+
+          <p>
+            Families whose pickup code has not yet
+            been checked out.
+          </p>
+
+        </div>
+
+        <input
+          id="activeSearch"
+          class="search"
+          placeholder="Search child or pickup code"
+        >
+
+      </div>
+
+      <div
+        id="activeList"
+        class="records"
+      ></div>
+
+    </section>
+
+
+
+    <!-- HISTORY -->
+
+    <section
+      id="historyTab"
+      class="tab-panel card"
+      hidden
+    >
+
+      <div class="section-head">
+
+        <div>
+
+          <h2>
+            Check-In History
+          </h2>
+
+          <p>
+            Permanent records stored in Google
+            Sheets.
+          </p>
+
+        </div>
+
+        <div class="filters">
+
+          <input
+            id="historyDate"
+            type="date"
+          >
+
+          <input
+            id="historySearch"
+            class="search"
+            placeholder="Search child or pickup code"
+          >
+
+          <button
+            id="exportBtn"
+            class="secondary"
+          >
+            Export CSV
+          </button>
+
+        </div>
+
+      </div>
+
+      <div
+        id="historyList"
+        class="records"
+      ></div>
+
+    </section>
+
+
+
+    <!-- TOOLS -->
+
+    <section
+      id="toolsTab"
+      class="tab-panel card"
+      hidden
+    >
+
+      <h2>
+        Roster Tools
+      </h2>
+
+      <p>
+        Use these only after Planning Center
+        records have changed.
+      </p>
+
+      <div class="tool-grid">
+
+        <button id="refreshRosterBtn">
+          Refresh Planning Center Roster
+        </button>
+
+        <button
+          id="initializeSheetBtn"
+          class="secondary"
+        >
+          Initialize Sheet Tabs
+        </button>
+
+      </div>
+
+      <div
+        id="toolsStatus"
+        class="status"
+      ></div>
+
+    </section>
+
+  </section>
+
+</main>
+
+
+
+<div
+  id="toast"
+  class="toast"
+></div>
+
+
+<script>
+
+window.VUMC_ADMIN_CONFIG = {
+
+  scriptUrl:
+    "https://script.google.com/macros/s/AKfycbwkn7gc4YiQ93wvL6dzazkzXkobZfGv6SjKQKgwLpawQwgaigB0Fal8-0WDOyG-RePj/exec"
+
+};
+
+</script>
+
+<script src="admin.js"></script>
+
+</body>
+</html>
