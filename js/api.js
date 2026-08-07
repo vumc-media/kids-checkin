@@ -26,20 +26,18 @@
   async function get(params = {}) {
     const url = new URL(config.API_URL);
 
-    Object.entries(params).forEach(
-      ([key, value]) => {
-        if (
-          value !== undefined &&
-          value !== null &&
-          value !== ""
-        ) {
-          url.searchParams.set(
-            key,
-            String(value)
-          );
-        }
+    Object.entries(params).forEach(([key, value]) => {
+      if (
+        value !== undefined &&
+        value !== null &&
+        value !== ""
+      ) {
+        url.searchParams.set(
+          key,
+          String(value)
+        );
       }
-    );
+    });
 
     const response = await fetch(
       url.toString(),
@@ -56,16 +54,14 @@
   async function post(payload = {}) {
     const body = new URLSearchParams();
 
-    Object.entries(payload).forEach(
-      ([key, value]) => {
-        body.set(
-          key,
-          typeof value === "string"
-            ? value
-            : JSON.stringify(value)
-        );
-      }
-    );
+    Object.entries(payload).forEach(([key, value]) => {
+      body.set(
+        key,
+        typeof value === "string"
+          ? value
+          : JSON.stringify(value)
+      );
+    });
 
     const response = await fetch(
       config.API_URL,
@@ -155,6 +151,47 @@
     history: async () => {
       return post({
         action: "history"
+      });
+    },
+
+    adminAuthenticate: async (adminPin) => {
+      return post({
+        action: "adminAuthenticate",
+        adminPin
+      });
+    },
+
+    adminDashboard: async (adminPin) => {
+      return post({
+        action: "adminDashboard",
+        adminPin
+      });
+    },
+
+    adminRefreshRoster: async (adminPin) => {
+      return post({
+        action: "adminRefreshRoster",
+        adminPin
+      });
+    },
+
+    adminCheckout: async (
+      adminPin,
+      pickupCode
+    ) => {
+      return post({
+        action: "adminCheckout",
+        adminPin,
+        pickupCode
+      });
+    },
+
+    adminInitializeSheet: async (
+      adminPin
+    ) => {
+      return post({
+        action: "adminInitializeSheet",
+        adminPin
       });
     }
 
