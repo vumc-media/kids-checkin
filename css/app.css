@@ -359,3 +359,155 @@ button{cursor:pointer}
     padding: 16px;
   }
 }
+
+/* =========================================================
+   HOUSEHOLD SEARCH + ALPHABET FILTER
+   ========================================================= */
+
+.alphabet-filter {
+  display: grid;
+  grid-template-columns: repeat(13, minmax(0, 1fr));
+  gap: 7px;
+  margin-bottom: 16px;
+}
+
+.letter-filter {
+  min-height: 42px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--navy);
+  font-weight: 900;
+  cursor: pointer;
+  transition:
+    background 140ms ease,
+    color 140ms ease,
+    border-color 140ms ease,
+    transform 140ms ease;
+}
+
+.letter-filter:hover {
+  border-color: #9fb7cf;
+  background: #f3f7fb;
+}
+
+.letter-filter:active {
+  transform: translateY(1px);
+}
+
+.letter-filter.active {
+  color: #fff;
+  border-color: var(--navy);
+  background: var(--navy);
+}
+
+.household-results {
+  display: grid;
+  gap: 10px;
+}
+
+.household-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #fbfdff;
+}
+
+.household-card-content {
+  min-width: 0;
+  flex: 1;
+}
+
+.household-name {
+  margin-bottom: 8px;
+  color: var(--navy);
+  font-size: 18px;
+  font-weight: 900;
+}
+
+.household-section {
+  display: flex;
+  gap: 8px;
+  margin-top: 5px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.household-label {
+  flex: 0 0 auto;
+  color: var(--navy);
+  font-weight: 800;
+}
+
+.household-search-prompt {
+  margin-top: 4px;
+}
+
+.selected-child-card {
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+}
+
+.selected-child-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.selected-child-header strong {
+  color: var(--navy);
+}
+
+.selected-child-header .btn {
+  min-height: 36px;
+  padding: 6px 11px;
+}
+
+.selected-service-field {
+  margin-top: 10px;
+}
+
+
+/* =========================================================
+   RESPONSIVE HOUSEHOLD SEARCH
+   ========================================================= */
+
+@media (max-width: 900px) {
+  .alphabet-filter {
+    grid-template-columns: repeat(9, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .alphabet-filter {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+  }
+
+  .household-card {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .household-card .btn {
+    width: 100%;
+  }
+
+  .household-section {
+    flex-direction: column;
+    gap: 2px;
+  }
+}
+
+@media (max-width: 480px) {
+  .alphabet-filter {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
