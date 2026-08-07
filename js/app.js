@@ -3,7 +3,9 @@
 
   const state = {
     people: [],
-    selected: new Map()
+    households: [],
+    selected: new Map(),
+    activeLetter: ""
   };
 
   const $ = (selector) => document.querySelector(selector);
@@ -131,26 +133,193 @@
   async function checkBackend() {
     try {
       const result = await KidsAPI.health();
-      const message = result.message || "Backend online";
 
       refs.backendDot.className = "status-dot online";
-      refs.backendText.textContent = message;
+      refs.backendText.textContent =
+        result.message || "Backend online";
 
-      refs.landingBackendDot.className = "status-dot online";
-      refs.landingBackendText.textContent = "Check-in service ready";
-    } catch (error) {
+      refs.landingBackendDot.className =
+        "status-dot online";
+
+      refs.landingBackendText.textContent =
+        "Check-in service ready";
+    } catch (_) {
       refs.backendDot.className = "status-dot offline";
-      refs.backendText.textContent = "Backend unavailable";
+      refs.backendText.textContent =
+        "Backend unavailable";
 
-      refs.landingBackendDot.className = "status-dot offline";
+      refs.landingBackendDot.className =
+        "status-dot offline";
+
       refs.landingBackendText.textContent =
         "Check-in service unavailable";
     }
   }
 
+  function personName(person) {
+    if (!person) return "";
+
+    return (
+      person.name ||
+      [
+        person.firstName || person.first_name,
+        person.lastName || person.last_name
+      ]
+        .filter(Boolean)
+        .join(" ")
+    ).trim();
+  }
+
+  function personLastName(person) {
+    return String(
+      person?.lastName ||
+      person?.last_name ||
+      personName(person).split(" ").slice(-1)[0] ||
+      ""
+    ).trim();
+  }
+
+  function buildHouseholdIndex() {
+    const households = new Map();
+
+    const eligibleChildren = new Map(
+      state.people.map((person) => [
+        String(person.id),
+        person
+      ])
+    );
+
+    state.people.forEach((person) => {
+      const personHouseholds =
+        Array.isArray(person.households)
+          ? person.households
+          : [];
+
+      if (!personHouseholds.length) {
+        const fallbackName =
+          `${personLastName(person) || "Unknown"} Household`;
+
+        const fallbackId =
+          `person-${String(person.id)}`;
+
+        if (!households.has(fallbackId)) {
+          households.set(fallbackId, {
+            id: fallbackId,
+            name: fallbackName,
+            adults: [],
+            children: [person]
+          });
+        }
+
+        return;
+      }
+
+      personHouseholds.forEach((household) => {
+        const id =
+          String(
+            household.id ||
+            `household-${personLastName(person)}`
+          );
+
+        if (!households.has(id)) {
+          households.set(id, {
+            id,
+            name:
+              household.name ||
+              `${personLastName(person)} Household`,
+            adults: [],
+            children: []
+          });
+        }
+
+        const family = households.get(id);
+
+        const members =
+          Array.isArray(household.members)
+            ? household.members
+            : [];
+
+        members.forEach((member) => {
+          const memberId = String(member.id || "");
+
+          if (member.child) {
+            const eligibleChild =
+              eligibleChildren.get(memberId);
+
+            if (
+              eligibleChild &&
+              !family.children.some(
+                (child) =>
+                  String(child.id) === memberId
+              )
+            ) {
+              family.children.push(eligibleChild);
+            }
+          } else {
+            if (
+              memberId &&
+              !family.adults.some(
+                (adult) =>
+                  String(adult.id) === memberId
+              )
+            ) {
+              family.adults.push({
+                id: memberId,
+                name: personName(member)
+              });
+            }
+          }
+        });
+
+        const currentId = String(person.id);
+
+        if (
+          !family.children.some(
+            (child) =>
+              String(child.id) === currentId
+          )
+        ) {
+          family.children.push(person);
+        }
+      });
+    });
+
+    state.households = [...households.values()]
+      .filter((household) => household.children.length)
+      .map((household) => ({
+        ...household,
+
+        adults: household.adults
+          .filter((adult) => adult.name)
+          .sort((a, b) =>
+            a.name.localeCompare(
+              b.name,
+              undefined,
+              { sensitivity: "base" }
+            )
+          ),
+
+        children: household.children
+          .sort((a, b) =>
+            personName(a).localeCompare(
+              personName(b),
+              undefined,
+              { sensitivity: "base" }
+            )
+          )
+      }))
+      .sort((a, b) =>
+        a.name.localeCompare(
+          b.name,
+          undefined,
+          { sensitivity: "base" }
+        )
+      );
+  }
+
   async function loadRoster(force = false) {
     refs.resultsList.innerHTML =
-      '<div class="empty">Loading the child roster…</div>';
+      '<div class="empty">Loading families…</div>';
 
     setBusy(
       refs.refreshRosterBtn,
@@ -159,14 +328,17 @@
     );
 
     try {
-      const result = await KidsAPI.getPeople(force);
+      const result =
+        await KidsAPI.getPeople(force);
 
-      state.people = Array.isArray(result.rows)
-        ? result.rows
-        : Array.isArray(result.roster)
-          ? result.roster
-          : [];
+      state.people =
+        Array.isArray(result.rows)
+          ? result.rows
+          : Array.isArray(result.roster)
+            ? result.roster
+            : [];
 
+      buildHouseholdIndex();
       filterRoster();
     } catch (error) {
       refs.resultsList.innerHTML = `
@@ -180,110 +352,239 @@
     }
   }
 
-  function getPrimaryHousehold(person) {
-    if (
-      !person ||
-      !Array.isArray(person.households) ||
-      !person.households.length
-    ) {
-      return null;
-    }
+  function renderAlphabet() {
+    const letters =
+      "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 
-    return person.households[0];
+    return `
+      <div class="alphabet-filter">
+        ${letters
+          .map(
+            (letter) => `
+              <button
+                type="button"
+                class="letter-filter ${
+                  state.activeLetter === letter
+                    ? "active"
+                    : ""
+                }"
+                data-letter="${letter}"
+              >
+                ${letter}
+              </button>
+            `
+          )
+          .join("")}
+      </div>
+    `;
   }
 
-  function renderResults(rows) {
-    if (!rows.length) {
-      refs.resultsList.innerHTML =
-        '<div class="empty">No children matched your search.</div>';
+  function renderSearchPrompt() {
+    refs.resultsList.innerHTML = `
+      ${renderAlphabet()}
+
+      <div class="empty household-search-prompt">
+        Select the first letter of the family's
+        last name, or begin typing above.
+      </div>
+    `;
+  }
+
+  function householdSearchText(household) {
+    return [
+      household.name,
+      ...household.adults.map((adult) => adult.name),
+      ...household.children.map((child) =>
+        personName(child)
+      )
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+  }
+
+  function isHouseholdSelected(household) {
+    if (!household.children.length) return false;
+
+    return household.children.every((child) =>
+      state.selected.has(String(child.id))
+    );
+  }
+
+  function renderHouseholds(households) {
+    if (!households.length) {
+      refs.resultsList.innerHTML = `
+        ${renderAlphabet()}
+
+        <div class="empty">
+          No families matched your search.
+        </div>
+      `;
       return;
     }
 
-    refs.resultsList.innerHTML = rows
-      .map((person) => {
-        const selected = state.selected.has(String(person.id));
-        const household = getPrimaryHousehold(person);
+    refs.resultsList.innerHTML = `
+      ${renderAlphabet()}
 
-        const householdName =
-          household?.name || "Planning Center household";
+      <div class="household-results">
+        ${households
+          .map((household) => {
+            const selected =
+              isHouseholdSelected(household);
 
-        const familyMembers = Array.isArray(household?.members)
-          ? household.members
-          : [];
+            const adultNames =
+              household.adults
+                .map((adult) => adult.name)
+                .filter(Boolean);
 
-        const adults = familyMembers.filter(
-          (member) => !member.child
+            const childNames =
+              household.children
+                .map((child) => personName(child))
+                .filter(Boolean);
+
+            return `
+              <article class="household-card">
+
+                <div class="household-card-content">
+
+                  <div class="household-name">
+                    ${escapeHtml(household.name)}
+                  </div>
+
+                  ${
+                    adultNames.length
+                      ? `
+                        <div class="household-section">
+                          <span class="household-label">
+                            Parent / Guardian
+                          </span>
+
+                          <span>
+                            ${escapeHtml(
+                              adultNames.join(" • ")
+                            )}
+                          </span>
+                        </div>
+                      `
+                      : ""
+                  }
+
+                  <div class="household-section">
+                    <span class="household-label">
+                      Children
+                    </span>
+
+                    <span>
+                      ${escapeHtml(
+                        childNames.join(" • ")
+                      )}
+                    </span>
+                  </div>
+
+                </div>
+
+                <button
+                  type="button"
+                  class="btn ${
+                    selected ? "danger" : "primary"
+                  } select-household"
+                  data-household-id="${escapeHtml(
+                    household.id
+                  )}"
+                >
+                  ${
+                    selected
+                      ? "Remove Household"
+                      : "Select Household"
+                  }
+                </button>
+
+              </article>
+            `;
+          })
+          .join("")}
+      </div>
+    `;
+  }
+
+  function filterRoster() {
+    const query =
+      refs.searchInput.value
+        .trim()
+        .toLowerCase();
+
+    if (!query && !state.activeLetter) {
+      renderSearchPrompt();
+      return;
+    }
+
+    let filtered = state.households;
+
+    if (state.activeLetter) {
+      filtered = filtered.filter((household) => {
+        const familyName =
+          household.name
+            .replace(/\s+Household$/i, "")
+            .trim();
+
+        return familyName
+          .toUpperCase()
+          .startsWith(state.activeLetter);
+      });
+    }
+
+    if (query) {
+      filtered = filtered.filter((household) =>
+        householdSearchText(household)
+          .includes(query)
+      );
+    }
+
+    renderHouseholds(filtered);
+  }
+
+  function toggleHousehold(householdId) {
+    const household =
+      state.households.find(
+        (item) =>
+          String(item.id) ===
+          String(householdId)
+      );
+
+    if (!household) return;
+
+    const allSelected =
+      isHouseholdSelected(household);
+
+    if (allSelected) {
+      household.children.forEach((child) => {
+        state.selected.delete(
+          String(child.id)
         );
+      });
+    } else {
+      household.children.forEach((child) => {
+        const id = String(child.id);
 
-        const adultNames = adults
-          .map((adult) => adult.name)
-          .filter(Boolean)
-          .join(" • ");
+        if (!state.selected.has(id)) {
+          state.selected.set(id, {
+            ...child,
+            name: personName(child),
+            service:
+              child.service ||
+              "Sunday School"
+          });
+        }
+      });
+    }
 
-        const photo = person.photo || person.photoUrl || "";
-
-        return `
-          <article class="person-card">
-            <div class="person-card-main">
-
-              ${
-                photo
-                  ? `
-                    <img
-                      src="${escapeHtml(photo)}"
-                      alt="${escapeHtml(person.name || "Child")}"
-                      class="person-photo"
-                    >
-                  `
-                  : ""
-              }
-
-              <div>
-                <div class="person-name">
-                  ${escapeHtml(person.name || "Unnamed child")}
-                </div>
-
-                <div class="person-meta">
-                  ${escapeHtml(householdName)}
-                </div>
-
-                ${
-                  adultNames
-                    ? `
-                      <div class="person-meta">
-                        Parent / Guardian: ${escapeHtml(adultNames)}
-                      </div>
-                    `
-                    : ""
-                }
-
-                ${
-                  person.grade
-                    ? `
-                      <div class="person-meta">
-                        Grade: ${escapeHtml(person.grade)}
-                      </div>
-                    `
-                    : ""
-                }
-              </div>
-            </div>
-
-            <button
-              class="btn ${selected ? "danger" : "primary"} select-person"
-              type="button"
-              data-person-id="${escapeHtml(person.id)}"
-            >
-              ${selected ? "Remove" : "Select"}
-            </button>
-          </article>
-        `;
-      })
-      .join("");
+    renderSelected();
+    filterRoster();
   }
 
   function renderSelected() {
-    const people = [...state.selected.values()];
+    const people =
+      [...state.selected.values()];
 
     if (!people.length) {
       refs.selectedList.innerHTML =
@@ -293,151 +594,144 @@
       return;
     }
 
-    refs.selectedList.innerHTML = people
-      .map((person) => {
-        return `
-          <div class="selected-child-card">
+    refs.selectedList.innerHTML =
+      people
+        .sort((a, b) =>
+          personName(a).localeCompare(
+            personName(b),
+            undefined,
+            { sensitivity: "base" }
+          )
+        )
+        .map(
+          (person) => `
+            <div class="selected-child-card">
 
-            <div class="selected-child-header">
-              <strong>${escapeHtml(person.name)}</strong>
+              <div class="selected-child-header">
 
-              <button
-                class="btn danger remove-selected"
-                type="button"
-                data-person-id="${escapeHtml(person.id)}"
-                aria-label="Remove ${escapeHtml(person.name)}"
-              >
-                ×
-              </button>
+                <strong>
+                  ${escapeHtml(personName(person))}
+                </strong>
+
+                <button
+                  class="btn danger remove-selected"
+                  type="button"
+                  data-person-id="${escapeHtml(
+                    person.id
+                  )}"
+                  aria-label="Remove ${escapeHtml(
+                    personName(person)
+                  )}"
+                >
+                  ×
+                </button>
+
+              </div>
+
+              <div class="field selected-service-field">
+
+                <label
+                  for="service-${escapeHtml(person.id)}"
+                >
+                  Service / Event
+                </label>
+
+                <select
+                  class="child-service-select"
+                  id="service-${escapeHtml(person.id)}"
+                  data-person-id="${escapeHtml(person.id)}"
+                >
+
+                  <option
+                    value="Sunday School"
+                    ${
+                      (person.service ||
+                        "Sunday School") ===
+                      "Sunday School"
+                        ? "selected"
+                        : ""
+                    }
+                  >
+                    Sunday School
+                  </option>
+
+                  <option
+                    value="Children's Church"
+                    ${
+                      person.service ===
+                      "Children's Church"
+                        ? "selected"
+                        : ""
+                    }
+                  >
+                    Children's Church
+                  </option>
+
+                  <option
+                    value="Nursery"
+                    ${
+                      person.service === "Nursery"
+                        ? "selected"
+                        : ""
+                    }
+                  >
+                    Nursery
+                  </option>
+
+                  <option
+                    value="Wednesday Kids"
+                    ${
+                      person.service ===
+                      "Wednesday Kids"
+                        ? "selected"
+                        : ""
+                    }
+                  >
+                    Wednesday Kids
+                  </option>
+
+                  <option
+                    value="Other / General"
+                    ${
+                      person.service ===
+                      "Other / General"
+                        ? "selected"
+                        : ""
+                    }
+                  >
+                    Other / General
+                  </option>
+
+                </select>
+
+              </div>
+
             </div>
-
-            <div class="field selected-service-field">
-              <label for="service-${escapeHtml(person.id)}">
-                Service / Event
-              </label>
-
-              <select
-                class="child-service-select"
-                id="service-${escapeHtml(person.id)}"
-                data-person-id="${escapeHtml(person.id)}"
-              >
-                <option value="Sunday School"
-                  ${
-                    (person.service || "Sunday School") === "Sunday School"
-                      ? "selected"
-                      : ""
-                  }>
-                  Sunday School
-                </option>
-
-                <option value="Children's Church"
-                  ${
-                    person.service === "Children's Church"
-                      ? "selected"
-                      : ""
-                  }>
-                  Children's Church
-                </option>
-
-                <option value="Nursery"
-                  ${person.service === "Nursery" ? "selected" : ""}>
-                  Nursery
-                </option>
-
-                <option value="Wednesday Kids"
-                  ${
-                    person.service === "Wednesday Kids"
-                      ? "selected"
-                      : ""
-                  }>
-                  Wednesday Kids
-                </option>
-
-                <option value="Other / General"
-                  ${
-                    person.service === "Other / General"
-                      ? "selected"
-                      : ""
-                  }>
-                  Other / General
-                </option>
-              </select>
-            </div>
-
-          </div>
-        `;
-      })
-      .join("");
+          `
+        )
+        .join("");
 
     refs.submitCheckinBtn.disabled = false;
   }
 
-  function togglePerson(id) {
-    id = String(id);
+  function removeSelectedPerson(id) {
+    state.selected.delete(String(id));
 
-    const person = state.people.find(
-      (item) => String(item.id) === id
-    );
-
-    if (!person) return;
-
-    if (state.selected.has(id)) {
-      state.selected.delete(id);
-    } else {
-      state.selected.set(
-        id,
-        Object.assign({}, person, {
-          service: person.service || "Sunday School"
-        })
-      );
-    }
-
-    filterRoster();
     renderSelected();
-  }
-
-  function filterRoster() {
-    const query = refs.searchInput.value
-      .trim()
-      .toLowerCase();
-
-    const filtered = state.people.filter((person) => {
-      const household = getPrimaryHousehold(person);
-
-      const familyNames = Array.isArray(household?.members)
-        ? household.members
-            .map((member) => member.name || "")
-            .join(" ")
-        : "";
-
-      const searchable = [
-        person.name,
-        person.firstName,
-        person.lastName,
-        person.first_name,
-        person.last_name,
-        person.grade,
-        household?.name,
-        familyNames
-      ]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase();
-
-      return searchable.includes(query);
-    });
-
-    renderResults(filtered);
+    filterRoster();
   }
 
   async function submitSelectedCheckin() {
-    const people = [...state.selected.values()].map(
-      (person) => ({
-        id: String(person.id),
-        name: person.name,
-        service: person.service || "Sunday School"
-      })
-    );
+    const people =
+      [...state.selected.values()].map(
+        (person) => ({
+          id: String(person.id),
+          name: personName(person),
+          service:
+            person.service ||
+            "Sunday School"
+        })
+      );
 
     if (!people.length) return;
 
@@ -450,22 +744,28 @@
     );
 
     try {
-      const result = await KidsAPI.submitAttendance({
-        people,
-        children: people,
-        noteText: refs.checkinNote.value.trim(),
-        note: refs.checkinNote.value.trim(),
-        label: "VUMC Kids"
-      });
+      const note =
+        refs.checkinNote.value.trim();
 
-      refs.successNames.textContent = people
-        .map((person) => person.name)
-        .join(", ");
+      const result =
+        await KidsAPI.submitAttendance({
+          people,
+          children: people,
+          noteText: note,
+          note,
+          label: "VUMC Kids"
+        });
+
+      refs.successNames.textContent =
+        people
+          .map((person) => person.name)
+          .join(", ");
 
       refs.successCode.textContent =
         result.pickupCode || "—";
 
       state.selected.clear();
+      state.activeLetter = "";
 
       refs.checkinNote.value = "";
       refs.searchInput.value = "";
@@ -481,7 +781,10 @@
         "error"
       );
     } finally {
-      setBusy(refs.submitCheckinBtn, false);
+      setBusy(
+        refs.submitCheckinBtn,
+        false
+      );
 
       refs.submitCheckinBtn.disabled =
         state.selected.size === 0;
@@ -514,7 +817,11 @@
     const notes =
       $("#guestNotes").value.trim();
 
-    if (!childFirst || !parentName || !phone) {
+    if (
+      !childFirst ||
+      !parentName ||
+      !phone
+    ) {
       showNotice(
         refs.guestNotice,
         "Enter the child name, parent or guardian, and mobile number.",
@@ -523,15 +830,20 @@
       return;
     }
 
-    const fullName = [childFirst, childLast]
-      .filter(Boolean)
-      .join(" ");
+    const fullName =
+      [childFirst, childLast]
+        .filter(Boolean)
+        .join(" ");
 
     const noteText = [
       `Guest parent/guardian: ${parentName}`,
       `Mobile: ${phone}`,
-      grade ? `Age/grade: ${grade}` : "",
-      notes ? `Notes: ${notes}` : ""
+      grade
+        ? `Age/grade: ${grade}`
+        : "",
+      notes
+        ? `Notes: ${notes}`
+        : ""
     ]
       .filter(Boolean)
       .join("\n");
@@ -549,7 +861,11 @@
         'button[type="submit"]'
       );
 
-    setBusy(button, true, "Checking In…");
+    setBusy(
+      button,
+      true,
+      "Checking In…"
+    );
 
     try {
       const result =
@@ -589,7 +905,10 @@
 
     hideNotice(refs.pickupNotice);
 
-    refs.pickupResult.classList.add("hidden");
+    refs.pickupResult.classList.add(
+      "hidden"
+    );
+
     refs.pickupResult.innerHTML = "";
 
     if (code.length !== 4) {
@@ -609,7 +928,9 @@
 
     try {
       const result =
-        await KidsAPI.verifyPickupCode(code);
+        await KidsAPI.verifyPickupCode(
+          code
+        );
 
       const record =
         result.record || {};
@@ -626,25 +947,21 @@
           <strong>Children:</strong>
           ${escapeHtml(
             children.join(", ") ||
-            "No names returned"
+            "Pickup completed"
           )}
         </p>
 
         <p>
           <strong>Code:</strong>
-          ${escapeHtml(record.code || code)}
-        </p>
-
-        <p>
-          <strong>Checked out:</strong>
           ${escapeHtml(
-            record.checkedOutAt ||
-            "Completed"
+            record.code || code
           )}
         </p>
       `;
 
-      refs.pickupResult.classList.remove("hidden");
+      refs.pickupResult.classList.remove(
+        "hidden"
+      );
 
       showNotice(
         refs.pickupNotice,
@@ -682,15 +999,19 @@
       returnHome;
 
     $$(".nav-btn").forEach((button) => {
-      button.onclick =
-        () => switchView(button.dataset.view);
+      button.onclick = () =>
+        switchView(button.dataset.view);
     });
 
-    refs.searchInput.oninput =
-      filterRoster;
+    refs.searchInput.oninput = () => {
+      state.activeLetter = "";
+      filterRoster();
+    };
 
     refs.clearSearchBtn.onclick = () => {
       refs.searchInput.value = "";
+      state.activeLetter = "";
+
       filterRoster();
       refs.searchInput.focus();
     };
@@ -698,45 +1019,76 @@
     refs.refreshRosterBtn.onclick =
       () => loadRoster(true);
 
-    refs.resultsList.onclick = (event) => {
-      const button =
-        event.target.closest(".select-person");
+    refs.resultsList.onclick =
+      (event) => {
+        const letterButton =
+          event.target.closest(
+            ".letter-filter"
+          );
 
-      if (button) {
-        togglePerson(
-          button.dataset.personId
-        );
-      }
-    };
+        if (letterButton) {
+          const letter =
+            letterButton.dataset.letter;
 
-    refs.selectedList.onclick = (event) => {
-      const button =
-        event.target.closest(".remove-selected");
+          state.activeLetter =
+            state.activeLetter === letter
+              ? ""
+              : letter;
 
-      if (button) {
-        togglePerson(
-          button.dataset.personId
-        );
-      }
-    };
+          refs.searchInput.value = "";
 
-    refs.selectedList.onchange = (event) => {
-      const select =
-        event.target.closest(
-          ".child-service-select"
-        );
+          filterRoster();
+          return;
+        }
 
-      if (!select) return;
+        const householdButton =
+          event.target.closest(
+            ".select-household"
+          );
 
-      const person =
-        state.selected.get(
-          String(select.dataset.personId)
-        );
+        if (householdButton) {
+          toggleHousehold(
+            householdButton.dataset
+              .householdId
+          );
+        }
+      };
 
-      if (person) {
-        person.service = select.value;
-      }
-    };
+    refs.selectedList.onclick =
+      (event) => {
+        const button =
+          event.target.closest(
+            ".remove-selected"
+          );
+
+        if (button) {
+          removeSelectedPerson(
+            button.dataset.personId
+          );
+        }
+      };
+
+    refs.selectedList.onchange =
+      (event) => {
+        const select =
+          event.target.closest(
+            ".child-service-select"
+          );
+
+        if (!select) return;
+
+        const person =
+          state.selected.get(
+            String(
+              select.dataset.personId
+            )
+          );
+
+        if (person) {
+          person.service =
+            select.value;
+        }
+      };
 
     refs.submitCheckinBtn.onclick =
       submitSelectedCheckin;
@@ -747,13 +1099,17 @@
     refs.verifyPickupBtn.onclick =
       verifyPickup;
 
-    refs.pickupCodeInput.oninput = () => {
-      refs.pickupCodeInput.value =
-        refs.pickupCodeInput.value
-          .toUpperCase()
-          .replace(/[^A-Z0-9]/g, "")
-          .slice(0, 4);
-    };
+    refs.pickupCodeInput.oninput =
+      () => {
+        refs.pickupCodeInput.value =
+          refs.pickupCodeInput.value
+            .toUpperCase()
+            .replace(
+              /[^A-Z0-9]/g,
+              ""
+            )
+            .slice(0, 4);
+      };
 
     refs.pickupCodeInput.onkeydown =
       (event) => {
@@ -776,11 +1132,15 @@
       loadRoster(false)
     ]);
 
-    if ("serviceWorker" in navigator) {
+    if (
+      "serviceWorker" in navigator
+    ) {
       navigator.serviceWorker
         .register(
           "./service-worker.js",
-          { updateViaCache: "none" }
+          {
+            updateViaCache: "none"
+          }
         )
         .then((registration) =>
           registration.update()
