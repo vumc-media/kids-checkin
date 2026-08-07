@@ -34,10 +34,6 @@
 
 <body>
 
-  <!-- =========================================================
-       LANDING SCREEN
-       ========================================================= -->
-
   <section
     id="landingScreen"
     class="landing-screen"
@@ -87,7 +83,6 @@
           </span>
         </button>
 
-
         <button
           id="landingGuestBtn"
           class="landing-action guest-action"
@@ -107,7 +102,6 @@
             </small>
           </span>
         </button>
-
 
         <button
           id="landingPickupBtn"
@@ -131,30 +125,15 @@
 
       </div>
 
-
       <p class="landing-footer">
-
-        <span class="love">
-          LOVE
-        </span>
-
+        <span class="love">LOVE</span>
         •
-
-        <span class="grow">
-          GROW
-        </span>
-
+        <span class="grow">GROW</span>
         •
-
-        <span class="serve">
-          SERVE
-        </span>
-
+        <span class="serve">SERVE</span>
       </p>
 
-
       <div class="landing-status">
-
         <span
           id="landingBackendDot"
           class="status-dot"
@@ -163,17 +142,10 @@
         <span id="landingBackendText">
           Connecting to check-in service…
         </span>
-
       </div>
 
     </div>
   </section>
-
-
-
-  <!-- =========================================================
-       APPLICATION
-       ========================================================= -->
 
   <div
     id="appContent"
@@ -200,36 +172,34 @@
 
       </div>
 
-
       <div class="header-actions">
 
-  <button id="homeBtn" class="home-btn">
-    Home
-  </button>
+        <button
+          id="homeBtn"
+          class="home-btn"
+          type="button"
+        >
+          Home
+        </button>
 
-  <button
-      id="refreshRosterBtn"
-      class="icon-btn"
-      title="Refresh Planning Center Roster">
-      ↻
-  </button>
+        <div class="backend-pill">
 
-  <div class="backend-pill">
-      <span id="backendDot" class="status-dot"></span>
-      <span id="backendText">Connecting…</span>
-  </div>
+          <span
+            id="backendDot"
+            class="status-dot"
+          ></span>
 
-</div>
+          <span id="backendText">
+            Connecting…
+          </span>
+
+        </div>
+
+      </div>
 
     </header>
 
-
-
     <main class="app-shell">
-
-      <!-- =====================================================
-           NAVIGATION
-           ===================================================== -->
 
       <nav class="nav-tabs">
 
@@ -241,7 +211,6 @@
           Check In
         </button>
 
-
         <button
           class="nav-btn"
           data-view="guestView"
@@ -249,7 +218,6 @@
         >
           Guest Check-In
         </button>
-
 
         <button
           class="nav-btn"
@@ -260,12 +228,6 @@
         </button>
 
       </nav>
-
-
-
-      <!-- =====================================================
-           RETURNING FAMILY CHECK-IN
-           ===================================================== -->
 
       <section
         id="checkinView"
@@ -279,7 +241,7 @@
             <div>
 
               <h2>
-                Returning Family Check-In
+                Family Check-In
               </h2>
 
               <p>
@@ -288,17 +250,7 @@
 
             </div>
 
-
-            <button
-              id="refreshRosterBtn"
-              class="btn secondary"
-              type="button"
-            >
-              Refresh Roster
-            </button>
-
           </div>
-
 
           <div class="panel-body">
 
@@ -319,7 +271,6 @@
 
               </div>
 
-
               <button
                 id="clearSearchBtn"
                 class="btn secondary"
@@ -330,8 +281,6 @@
 
             </div>
 
-
-
             <div class="roster-layout">
 
               <div>
@@ -341,28 +290,24 @@
                   class="results"
                 >
                   <div class="empty">
-                    Loading the child roster…
+                    Loading families…
                   </div>
                 </div>
 
               </div>
-
-
 
               <aside
                 class="selection-card sticky-selection-card"
               >
 
                 <h3>
-Today's Check-In
+                  Today's Check-In
                 </h3>
-
 
                 <div
                   id="selectedList"
                   class="selected-list"
                 ></div>
-
 
                 <div class="field top-gap">
 
@@ -378,7 +323,6 @@ Today's Check-In
 
                 </div>
 
-
                 <button
                   id="submitCheckinBtn"
                   class="btn success full-btn"
@@ -387,7 +331,6 @@ Today's Check-In
                 >
                   Complete Check-In
                 </button>
-
 
                 <div
                   id="checkinNotice"
@@ -403,12 +346,6 @@ Today's Check-In
         </div>
 
       </section>
-
-
-
-      <!-- =====================================================
-           FIRST TIME GUEST
-           ===================================================== -->
 
       <section
         id="guestView"
@@ -434,7 +371,6 @@ Today's Check-In
 
           </div>
 
-
           <form
             id="guestForm"
             class="panel-body"
@@ -455,7 +391,6 @@ Today's Check-In
 
               </div>
 
-
               <div class="field">
 
                 <label for="guestChildLast">
@@ -465,7 +400,6 @@ Today's Check-In
                 <input id="guestChildLast">
 
               </div>
-
 
               <div class="field">
 
@@ -479,7 +413,6 @@ Today's Check-In
                 >
 
               </div>
-
 
               <div class="field">
 
@@ -495,7 +428,6 @@ Today's Check-In
 
               </div>
 
-
               <div class="field">
 
                 <label for="guestGrade">
@@ -505,7 +437,6 @@ Today's Check-In
                 <input id="guestGrade">
 
               </div>
-
 
               <div class="field">
 
@@ -535,7 +466,6 @@ Today's Check-In
 
               </div>
 
-
               <div class="field full">
 
                 <label for="guestNotes">
@@ -551,14 +481,12 @@ Today's Check-In
 
             </div>
 
-
             <button
               class="btn success"
               type="submit"
             >
               Check In Guest
             </button>
-
 
             <div
               id="guestNotice"
@@ -570,12 +498,6 @@ Today's Check-In
         </div>
 
       </section>
-
-
-
-      <!-- =====================================================
-           PICKUP
-           ===================================================== -->
 
       <section
         id="pickupView"
@@ -601,7 +523,6 @@ Today's Check-In
 
           </div>
 
-
           <div class="panel-body pickup-panel">
 
             <div class="field pickup-field">
@@ -619,7 +540,6 @@ Today's Check-In
 
             </div>
 
-
             <button
               id="verifyPickupBtn"
               class="btn primary"
@@ -628,12 +548,10 @@ Today's Check-In
               Verify and Check Out
             </button>
 
-
             <div
               id="pickupNotice"
               class="notice hidden"
             ></div>
-
 
             <div
               id="pickupResult"
@@ -645,12 +563,6 @@ Today's Check-In
         </div>
 
       </section>
-
-
-
-      <!-- =====================================================
-           SUCCESS SCREEN
-           ===================================================== -->
 
       <section
         id="successScreen"
@@ -669,18 +581,15 @@ Today's Check-In
 
           <p id="successNames"></p>
 
-
           <div
             class="pickup-code"
             id="successCode"
           ></div>
 
-
           <p>
             Keep this pickup code.
             Staff will use it when the child is picked up.
           </p>
-
 
           <button
             id="newCheckinBtn"
@@ -698,16 +607,8 @@ Today's Check-In
 
   </div>
 
-
-
-  <!-- =========================================================
-       JAVASCRIPT
-       ========================================================= -->
-
   <script src="./js/config.js?v=2.5.0"></script>
-
   <script src="./js/api.js?v=2.5.0"></script>
-
   <script src="./js/app.js?v=2.5.0"></script>
 
 </body>
