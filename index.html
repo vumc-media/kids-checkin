@@ -34,6 +34,10 @@
 
 <body>
 
+  <!-- =========================================================
+       LANDING SCREEN
+       ========================================================= -->
+
   <section
     id="landingScreen"
     class="landing-screen"
@@ -134,6 +138,7 @@
       </p>
 
       <div class="landing-status">
+
         <span
           id="landingBackendDot"
           class="status-dot"
@@ -142,10 +147,16 @@
         <span id="landingBackendText">
           Connecting to check-in service…
         </span>
+
       </div>
 
     </div>
   </section>
+
+
+  <!-- =========================================================
+       APPLICATION
+       ========================================================= -->
 
   <div
     id="appContent"
@@ -172,42 +183,59 @@
 
       </div>
 
+
       <div class="header-actions">
 
-  <button
-    id="homeBtn"
-    class="home-btn"
-    type="button"
-  >
-    Home
-  </button>
+        <button
+          id="homeBtn"
+          class="home-btn"
+          type="button"
+        >
+          Home
+        </button>
 
-  <button
-    id="refreshRosterBtn"
-    class="icon-btn"
-    type="button"
-    title="Refresh Planning Center roster"
-    aria-label="Refresh Planning Center roster"
-  >
-    ↻
-  </button>
+        <button
+          id="refreshRosterBtn"
+          class="icon-btn"
+          type="button"
+          title="Refresh Planning Center roster"
+          aria-label="Refresh Planning Center roster"
+        >
+          ↻
+        </button>
 
-  <div class="backend-pill">
-    <span
-      id="backendDot"
-      class="status-dot"
-    ></span>
+        <a
+          href="./admin/"
+          class="admin-btn"
+          title="Administrator"
+          aria-label="Open Administrator"
+        >
+          ⚙
+        </a>
 
-    <span id="backendText">
-      Connecting…
-    </span>
-  </div>
+        <div class="backend-pill">
 
-</div>
+          <span
+            id="backendDot"
+            class="status-dot"
+          ></span>
+
+          <span id="backendText">
+            Connecting…
+          </span>
+
+        </div>
+
+      </div>
 
     </header>
 
+
     <main class="app-shell">
+
+      <!-- =====================================================
+           NAVIGATION
+           ===================================================== -->
 
       <nav class="nav-tabs">
 
@@ -237,6 +265,11 @@
 
       </nav>
 
+
+      <!-- =====================================================
+           FAMILY CHECK-IN
+           ===================================================== -->
+
       <section
         id="checkinView"
         class="view active"
@@ -259,6 +292,7 @@
             </div>
 
           </div>
+
 
           <div class="panel-body">
 
@@ -289,6 +323,7 @@
 
             </div>
 
+
             <div class="roster-layout">
 
               <div>
@@ -303,6 +338,7 @@
                 </div>
 
               </div>
+
 
               <aside
                 class="selection-card sticky-selection-card"
@@ -355,6 +391,11 @@
 
       </section>
 
+
+      <!-- =====================================================
+           GUEST CHECK-IN
+           ===================================================== -->
+
       <section
         id="guestView"
         class="view"
@@ -378,6 +419,7 @@
             </div>
 
           </div>
+
 
           <form
             id="guestForm"
@@ -507,6 +549,11 @@
 
       </section>
 
+
+      <!-- =====================================================
+           PICKUP
+           ===================================================== -->
+
       <section
         id="pickupView"
         class="view"
@@ -530,6 +577,7 @@
             </div>
 
           </div>
+
 
           <div class="panel-body pickup-panel">
 
@@ -571,6 +619,11 @@
         </div>
 
       </section>
+
+
+      <!-- =====================================================
+           SUCCESS
+           ===================================================== -->
 
       <section
         id="successScreen"
@@ -614,6 +667,7 @@
     </main>
 
   </div>
+
 
   <script src="./js/config.js?v=2.5.0"></script>
   <script src="./js/api.js?v=2.5.0"></script>
