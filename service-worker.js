@@ -1,4 +1,4 @@
-const CACHE_NAME = "vumc-kids-v2-landing-1";
+const CACHE_NAME = "vumc-kids-v2-dymo-1";
 const APP_FILES = [
   "./",
   "./index.html",
@@ -6,6 +6,7 @@ const APP_FILES = [
   "./js/config.js",
   "./js/api.js",
   "./js/app.js",
+  "./js/dymo-print.js",
   "./manifest.json",
   "./media/vumc-kids-pco.png"
 ];
@@ -33,9 +34,10 @@ self.addEventListener("fetch", (event) => {
 
   const requestUrl = new URL(event.request.url);
 
-  // Never cache calls to Google Apps Script.
-  if (requestUrl.hostname === "script.google.com" ||
-      requestUrl.hostname === "script.googleusercontent.com") {
+  if (
+    requestUrl.hostname === "script.google.com" ||
+    requestUrl.hostname === "script.googleusercontent.com"
+  ) {
     return;
   }
 
