@@ -3,18 +3,14 @@
 
   const config = window.KIDS_CONFIG;
 
-  function loadLocalModule(src, marker) {
-    if (document.querySelector(`script[data-${marker}="true"]`)) return;
-
+  (function loadPrinterModule() {
+    if (document.querySelector('script[data-kids-printer="true"]')) return;
     const script = document.createElement("script");
-    script.src = src;
+    script.src = "./js/dymo-print.js?v=2.7.0";
     script.async = true;
-    script.setAttribute(`data-${marker}`, "true");
+    script.dataset.kidsPrinter = "true";
     document.head.appendChild(script);
-  }
-
-  loadLocalModule("./js/dymo-print.js?v=2.7.0", "kids-printer");
-  loadLocalModule("./js/child-checkin.js?v=2.7.0", "child-checkin");
+  })();
 
   async function parseResponse(response) {
     const text = await response.text();
@@ -81,7 +77,6 @@
   }
 
   window.KidsAPI = Object.freeze({
-
     health: () => get(),
 
     getPeople: async (forceRefresh = false) => {
@@ -96,50 +91,31 @@
       };
     },
 
-    submitAttendance: async ({
-      people,
-      children,
-      noteText,
-      note,
-      skipPrint = false
-    }) => {
+    submitAttendance: async ({ people, children, noteText, note }) => {
       const selected = Array.isArray(children)
         ? children
-        : Array.isArray(people)
-          ? people
-          : [];
+        : Array.isArray(people) ? people : [];
 
       const finalNote = note ?? noteText ?? "";
 
-      // Save attendance + send parent pickup email FIRST.
       const result = await post({
         action: "checkin",
         children: selected,
         note: finalNote
       });
 
-      // Individual-child UI uses skipPrint so it can print each child
-      // separately with that child's own allergy/care note.
-      if (skipPrint) {
-        result.labelPrint = {
-          ok: true,
-          skipped: true,
-          printed: 0
-        };
-        return result;
-      }
-
       try {
         const printer = await waitForPrinterModule();
 
-        result.labelPrint = printer
-          ? await printer.printLabels(selected, finalNote)
-          : {
-              ok: false,
-              printed: 0,
-              reason: "DYMO printing module did not load."
-            };
-
+        if (printer) {
+          result.labelPrint = await printer.printLabels(selected);
+        } else {
+          result.labelPrint = {
+            ok: false,
+            printed: 0,
+            reason: "DYMO printing module did not load."
+          };
+        }
       } catch (error) {
         result.labelPrint = {
           ok: false,
@@ -169,22 +145,10 @@
     },
 
     history: async () => post({ action: "history" }),
-
-    adminAuthenticate: async (adminPin) =>
-      post({ action: "adminAuthenticate", adminPin }),
-
-    adminDashboard: async (adminPin) =>
-      post({ action: "adminDashboard", adminPin }),
-
-    adminRefreshRoster: async (adminPin) =>
-      post({ action: "adminRefreshRoster", adminPin }),
-
-    adminCheckout: async (adminPin, pickupCode) =>
-      post({ action: "adminCheckout", adminPin, pickupCode }),
-
-    adminInitializeSheet: async (adminPin) =>
-      post({ action: "adminInitializeSheet", adminPin })
-
+    adminAuthenticate: async (adminPin) => post({ action: "adminAuthenticate", adminPin }),
+    adminDashboard: async (adminPin) => post({ action: "adminDashboard", adminPin }),
+    adminRefreshRoster: async (adminPin) => post({ action: "adminRefreshRoster", adminPin }),
+    adminCheckout: async (adminPin, pickupCode) => post({ action: "adminCheckout", adminPin, pickupCode }),
+    adminInitializeSheet: async (adminPin) => post({ action: "adminInitializeSheet", adminPin })
   });
-
 })();
