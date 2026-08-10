@@ -1,12 +1,23 @@
 (function () {
   "use strict";
 
-  const SDK_URL =
-    "https://cdn.jsdelivr.net/gh/dymosoftware/dymo-connect-framework@master/dymo.connect.framework.min.js";
+  const DYMO_PORTS = [
+    41951,
+    41952,
+    41953,
+    41954,
+    41955,
+    41956,
+    41957,
+    41958,
+    41959,
+    41960
+  ];
 
   const state = {
     ready: false,
-    printer: null,
+    printerName: "",
+    port: null,
     lastJob: null,
     status: "Checking printer…"
   };
@@ -17,21 +28,29 @@
   ========================================================================== */
 
   function escapeXml(value) {
+
     return String(value ?? "")
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;")
       .replace(/"/g, "&quot;")
       .replace(/'/g, "&apos;");
+
   }
 
 
   function ensureUi() {
 
-    if (!document.getElementById("dymoPrinterStyles")) {
+    if (
+      !document.getElementById(
+        "dymoPrinterStyles"
+      )
+    ) {
 
       const style =
-        document.createElement("style");
+        document.createElement(
+          "style"
+        );
 
       style.id =
         "dymoPrinterStyles";
@@ -43,9 +62,12 @@
           align-items:center;
           gap:8px;
           padding:8px 12px;
-          border:1px solid rgba(255,255,255,.2);
+          border:
+            1px solid
+            rgba(255,255,255,.2);
           border-radius:999px;
-          background:rgba(255,255,255,.08);
+          background:
+            rgba(255,255,255,.08);
           color:#fff;
           font-size:13px;
           white-space:nowrap;
@@ -74,7 +96,9 @@
           max-width:420px;
           padding:14px 16px;
           border-radius:14px;
-          box-shadow:0 14px 34px rgba(0,0,0,.2);
+          box-shadow:
+            0 14px 34px
+            rgba(0,0,0,.2);
           background:#0b2a52;
           color:#fff;
           font:
@@ -130,6 +154,7 @@
           ".header-actions"
         );
 
+
       if (headerActions) {
 
         const pill =
@@ -161,14 +186,14 @@
       )
     ) {
 
-      const returnButton =
-        document.getElementById(
-          "newCheckinBtn"
-        );
-
       const successScreen =
         document.getElementById(
           "successScreen"
+        );
+
+      const returnButton =
+        document.getElementById(
+          "newCheckinBtn"
         );
 
 
@@ -192,9 +217,8 @@
           true;
 
 
-        button.addEventListener(
-          "click",
-          async () => {
+        button.onclick =
+          async function () {
 
             if (!state.lastJob) {
               return;
@@ -228,8 +252,7 @@
 
             }
 
-          }
-        );
+          };
 
 
         if (
@@ -287,16 +310,23 @@
         "offline"
       );
 
+
       if (type) {
-        pill.classList.add(type);
+
+        pill.classList.add(
+          type
+        );
+
       }
 
     }
 
 
     if (text) {
+
       text.textContent =
         message;
+
     }
 
   }
@@ -347,9 +377,11 @@
 
     toast.timer =
       setTimeout(
-        () => {
+        function () {
+
           el.hidden =
             true;
+
         },
         6500
       );
@@ -358,223 +390,157 @@
 
 
   /* ==========================================================================
-  DYMO FRAMEWORK
+  DYMO LOCAL SERVICE
   ========================================================================== */
 
-  function getFramework() {
+  function serviceUrl(
+    port,
+    command
+  ) {
 
     return (
-      window.dymo &&
-      window.dymo.label &&
-      window.dymo.label.framework
-    )
-      ? window.dymo.label.framework
-      : null;
+      "https://localhost:" +
+      port +
+      "/DYMO/DLS/Printing/" +
+      command
+    );
 
   }
 
 
-  function printerName(
-    printer
+  async function fetchWithTimeout(
+    url,
+    options,
+    timeoutMs
   ) {
 
-    return String(
-      printer &&
-      (
-        printer.name ||
-        printer.Name ||
-        printer.modelName ||
-        printer.ModelName ||
-        printer.printerName ||
-        ""
-      )
-    ).trim();
+    const controller =
+      new AbortController();
+
+
+    const timer =
+      setTimeout(
+        function () {
+
+          controller.abort();
+
+        },
+        timeoutMs || 2500
+      );
+
+
+    try {
+
+      return await fetch(
+        url,
+        {
+          ...options,
+          signal:
+            controller.signal
+        }
+      );
+
+    } finally {
+
+      clearTimeout(
+        timer
+      );
+
+    }
 
   }
 
 
   /* ==========================================================================
-  NORMALIZE DYMO PRINTER COLLECTION
-
-  Different DYMO framework versions return the printer collection in
-  different formats. This handles arrays, array-like collections and
-  older byIndex collections.
+  PARSE GETPRINTERS XML
   ========================================================================== */
 
-  function normalizePrinters(
-    raw
+  function parsePrintersXml(
+    xmlText
   ) {
 
-    if (!raw) {
-      return [];
-    }
+    const parser =
+      new DOMParser();
 
 
-    if (
-      Array.isArray(raw)
-    ) {
-
-      return raw.filter(
-        Boolean
+    const doc =
+      parser.parseFromString(
+        xmlText,
+        "application/xml"
       );
-
-    }
-
-
-    if (
-      typeof raw.length ===
-      "number"
-    ) {
-
-      const rows = [];
-
-      for (
-        let i = 0;
-        i < raw.length;
-        i++
-      ) {
-
-        if (raw[i]) {
-          rows.push(
-            raw[i]
-          );
-        }
-
-      }
-
-
-      if (rows.length) {
-        return rows;
-      }
-
-    }
-
-
-    if (raw.byIndex) {
-
-      if (
-        Array.isArray(
-          raw.byIndex
-        )
-      ) {
-
-        return raw.byIndex.filter(
-          Boolean
-        );
-
-      }
-
-
-      const rows = [];
-
-      const source =
-        raw.byIndex;
-
-
-      Object.keys(source)
-        .forEach(
-          (key) => {
-
-            if (
-              source[key] &&
-              typeof source[key] ===
-                "object"
-            ) {
-
-              rows.push(
-                source[key]
-              );
-
-            }
-
-          }
-        );
-
-
-      if (rows.length) {
-        return rows;
-      }
-
-    }
 
 
     const rows = [];
 
 
-    Object.keys(raw)
-      .forEach(
-        (key) => {
+    [
+      "LabelWriterPrinter",
+      "TapePrinter",
+      "DZPrinter"
+    ].forEach(
+      function (tagName) {
 
-          const value =
-            raw[key];
+        const nodes =
+          doc.getElementsByTagName(
+            tagName
+          );
 
 
-          if (
-            value &&
-            typeof value ===
-              "object" &&
-            (
-              value.name ||
-              value.Name ||
-              value.modelName ||
-              value.ModelName ||
-              value.printerType
-            )
-          ) {
+        for (
+          let i = 0;
+          i < nodes.length;
+          i++
+        ) {
 
-            rows.push(
-              value
-            );
+          const node =
+            nodes[i];
+
+
+          function text(name) {
+
+            const item =
+              node.getElementsByTagName(
+                name
+              )[0];
+
+            return item
+              ? item.textContent.trim()
+              : "";
 
           }
 
+
+          rows.push({
+
+            name:
+              text("Name"),
+
+            modelName:
+              text("ModelName"),
+
+            isConnected:
+              text(
+                "IsConnected"
+              )
+                .toLowerCase() ===
+              "true",
+
+            isLocal:
+              text(
+                "IsLocal"
+              )
+                .toLowerCase() ===
+              "true"
+
+          });
+
         }
-      );
+
+      }
+    );
 
 
     return rows;
-
-  }
-
-
-  function isConnected(
-    printer
-  ) {
-
-    const value =
-      printer &&
-      (
-        printer.isConnected ??
-        printer.IsConnected
-      );
-
-
-    if (
-      value === undefined ||
-      value === null
-    ) {
-
-      return true;
-
-    }
-
-
-    if (
-      typeof value ===
-      "string"
-    ) {
-
-      return (
-        value.toLowerCase() ===
-        "true"
-      );
-
-    }
-
-
-    return (
-      value !== false
-    );
 
   }
 
@@ -583,45 +549,45 @@
     printers
   ) {
 
-    const rows =
-      normalizePrinters(
-        printers
-      );
+    if (
+      !Array.isArray(printers) ||
+      !printers.length
+    ) {
 
-
-    if (!rows.length) {
       return null;
+
     }
 
 
     const connected =
-      rows.filter(
-        isConnected
+      printers.filter(
+        function (printer) {
+
+          return (
+            printer.isConnected !==
+            false
+          );
+
+        }
       );
 
 
     const pool =
       connected.length
         ? connected
-        : rows;
+        : printers;
 
 
     return (
 
       pool.find(
-        (printer) => {
+        function (printer) {
 
           const text =
             (
-              printerName(
-                printer
-              ) +
+              printer.name +
               " " +
-              (
-                printer.modelName ||
-                printer.ModelName ||
-                ""
-              )
+              printer.modelName
             )
               .toLowerCase();
 
@@ -644,25 +610,18 @@
       ||
 
       pool.find(
-        (printer) => {
+        function (printer) {
 
-          const text =
+          return (
             (
-              printerName(
-                printer
-              ) +
+              printer.name +
               " " +
-              (
-                printer.modelName ||
-                printer.ModelName ||
-                ""
-              )
+              printer.modelName
             )
-              .toLowerCase();
-
-
-          return text.includes(
-            "labelwriter"
+              .toLowerCase()
+              .includes(
+                "labelwriter"
+              )
           );
 
         }
@@ -678,101 +637,7 @@
 
 
   /* ==========================================================================
-  GET PRINTER LIST
-  ========================================================================== */
-
-  async function getPrinterList(
-    framework
-  ) {
-
-    /*
-    Prefer async enumeration when available.
-    Newer DYMO Connect builds tend to behave better with this method.
-    */
-
-    if (
-      typeof framework
-        .getPrintersAsync ===
-      "function"
-    ) {
-
-      try {
-
-        const asyncResult =
-          await framework
-            .getPrintersAsync();
-
-
-        const normalized =
-          normalizePrinters(
-            asyncResult
-          );
-
-
-        if (
-          normalized.length
-        ) {
-
-          console.log(
-            "DYMO printers (async):",
-            normalized
-          );
-
-          return normalized;
-
-        }
-
-      } catch (error) {
-
-        console.warn(
-          "DYMO async printer enumeration failed:",
-          error
-        );
-
-      }
-
-    }
-
-
-    /*
-    Fall back to traditional synchronous enumeration.
-    */
-
-    if (
-      typeof framework
-        .getPrinters ===
-      "function"
-    ) {
-
-      const syncResult =
-        framework
-          .getPrinters();
-
-
-      const normalized =
-        normalizePrinters(
-          syncResult
-        );
-
-
-      console.log(
-        "DYMO printers (sync):",
-        normalized
-      );
-
-
-      return normalized;
-
-    }
-
-
-    return [];
-
-  }
-
-
-  /* ==========================================================================
-  REFRESH PRINTER STATUS
+  FIND LOCAL DYMO SERVICE + PRINTER
   ========================================================================== */
 
   async function refreshPrinter() {
@@ -780,139 +645,139 @@
     ensureUi();
 
 
-    const framework =
-      getFramework();
+    updateStatus(
+      "Checking DYMO…",
+      ""
+    );
 
 
-    if (!framework) {
+    for (
+      const port of DYMO_PORTS
+    ) {
 
-      state.ready =
-        false;
+      try {
 
-      state.printer =
-        null;
+        const response =
+          await fetchWithTimeout(
+            serviceUrl(
+              port,
+              "GetPrinters"
+            ),
+            {
+              method:
+                "GET",
 
-      updateStatus(
-        "DYMO unavailable",
-        "offline"
-      );
-
-      return null;
-
-    }
-
-
-    try {
-
-      if (
-        typeof framework.init ===
-        "function"
-      ) {
-
-        framework.init();
-
-      }
+              cache:
+                "no-store"
+            },
+            1800
+          );
 
 
-      const printers =
-        await getPrinterList(
-          framework
-        );
+        if (
+          !response.ok
+        ) {
+
+          continue;
+
+        }
 
 
-      const printer =
-        selectPrinter(
+        const xml =
+          await response.text();
+
+
+        const printers =
+          parsePrintersXml(
+            xml
+          );
+
+
+        console.log(
+          "DYMO port",
+          port,
+          "printers:",
           printers
         );
 
 
-      if (!printer) {
+        const printer =
+          selectPrinter(
+            printers
+          );
+
+
+        if (!printer) {
+
+          continue;
+
+        }
+
 
         state.ready =
-          false;
+          true;
 
-        state.printer =
-          null;
+        state.port =
+          port;
+
+        state.printerName =
+          printer.name;
 
 
         updateStatus(
-          "DYMO not found",
-          "offline"
+          printer.name,
+          "online"
         );
 
 
-        console.warn(
-          "DYMO framework loaded, but no printer was returned.",
-          printers
+        console.log(
+          "DYMO selected:",
+          printer.name,
+          "on port",
+          port
         );
 
 
-        return null;
+        return printer;
+
+      } catch (error) {
+
+        console.log(
+          "DYMO port " +
+          port +
+          " unavailable."
+        );
 
       }
 
-
-      state.printer =
-        printer;
-
-      state.ready =
-        true;
-
-
-      updateStatus(
-        printerName(
-          printer
-        ) ||
-        "DYMO ready",
-        "online"
-      );
-
-
-      console.log(
-        "DYMO selected printer:",
-        printer
-      );
-
-
-      return printer;
-
-
-    } catch (error) {
-
-      state.ready =
-        false;
-
-      state.printer =
-        null;
-
-
-      updateStatus(
-        "DYMO unavailable",
-        "offline"
-      );
-
-
-      console.warn(
-        "DYMO printer check failed:",
-        error
-      );
-
-
-      return null;
-
     }
+
+
+    state.ready =
+      false;
+
+    state.port =
+      null;
+
+    state.printerName =
+      "";
+
+
+    updateStatus(
+      "DYMO not found",
+      "offline"
+    );
+
+
+    return null;
 
   }
 
 
   /* ==========================================================================
-  CHILD LABEL
+  LABEL XML
 
-  Target:
-  DYMO LabelWriter 450 Turbo
-  Approx. 3.5" x 1.25" landscape label
-
-  Pickup code is intentionally NOT printed.
+  Pickup PIN intentionally excluded.
   ========================================================================== */
 
   function buildLabelXml(
@@ -920,7 +785,7 @@
     note
   ) {
 
-    const name =
+    const childName =
       escapeXml(
         child &&
         child.name
@@ -946,14 +811,19 @@
 
     const noteText =
       cleanNote
-        ? "NOTE: " +
-          cleanNote
+        ? (
+            "NOTE: " +
+            cleanNote
+          )
         : "";
 
 
     return `<?xml version="1.0" encoding="utf-8"?>
 
-<DieCutLabel Version="8.0" Units="twips">
+<DieCutLabel
+  Version="8.0"
+  Units="twips"
+>
 
   <PaperOrientation>
     Landscape
@@ -967,19 +837,7 @@
     30252 Address
   </PaperName>
 
-  <DrawCommands>
-
-    <RoundRectangle
-      X="0"
-      Y="0"
-      Width="1581"
-      Height="5040"
-      Rx="0"
-      Ry="0"
-    />
-
-  </DrawCommands>
-
+  <DrawCommands />
 
   <ObjectInfo>
 
@@ -1015,7 +873,7 @@
       </IsMirrored>
 
       <IsVariable>
-        False
+        True
       </IsVariable>
 
       <HorizontalAlignment>
@@ -1038,13 +896,12 @@
         False
       </Verticalized>
 
-
       <StyledText>
 
         <Element>
 
           <String>
-            ${name}
+            ${childName}
           </String>
 
           <Attributes>
@@ -1073,12 +930,11 @@
 
     </TextObject>
 
-
     <Bounds
-      X="180"
-      Y="90"
-      Width="4680"
-      Height="610"
+      X="220"
+      Y="120"
+      Width="4600"
+      Height="560"
     />
 
   </ObjectInfo>
@@ -1118,7 +974,7 @@
       </IsMirrored>
 
       <IsVariable>
-        False
+        True
       </IsVariable>
 
       <HorizontalAlignment>
@@ -1140,7 +996,6 @@
       <Verticalized>
         False
       </Verticalized>
-
 
       <StyledText>
 
@@ -1176,12 +1031,11 @@
 
     </TextObject>
 
-
     <Bounds
-      X="180"
+      X="220"
       Y="690"
-      Width="4680"
-      Height="350"
+      Width="4600"
+      Height="330"
     />
 
   </ObjectInfo>
@@ -1221,7 +1075,7 @@
       </IsMirrored>
 
       <IsVariable>
-        False
+        True
       </IsVariable>
 
       <HorizontalAlignment>
@@ -1243,7 +1097,6 @@
       <Verticalized>
         False
       </Verticalized>
-
 
       <StyledText>
 
@@ -1281,11 +1134,10 @@
 
     </TextObject>
 
-
     <Bounds
-      X="180"
-      Y="1040"
-      Width="4680"
+      X="220"
+      Y="1020"
+      Width="4600"
       Height="390"
     />
 
@@ -1297,7 +1149,7 @@
 
 
   /* ==========================================================================
-  PRINT ONE CHILD
+  PRINT DIRECTLY TO LOCAL DYMO SERVICE
   ========================================================================== */
 
   async function printOne(
@@ -1305,120 +1157,103 @@
     note
   ) {
 
-    const framework =
-      getFramework();
+    if (
+      !state.ready ||
+      !state.port ||
+      !state.printerName
+    ) {
+
+      await refreshPrinter();
+
+    }
 
 
-    if (!framework) {
+    if (
+      !state.ready ||
+      !state.port ||
+      !state.printerName
+    ) {
 
       throw new Error(
-        "DYMO printing service is unavailable."
+        "DYMO LabelWriter is unavailable."
       );
 
     }
 
 
-    const printer =
-      state.printer ||
-      (
-        await refreshPrinter()
-      );
+    const body =
+      new URLSearchParams();
 
 
-    if (!printer) {
-
-      throw new Error(
-        "No DYMO LabelWriter printer was found."
-      );
-
-    }
+    body.set(
+      "printerName",
+      state.printerName
+    );
 
 
-    const name =
-      printerName(
-        printer
-      );
+    body.set(
+      "printParamsXml",
+      ""
+    );
 
 
-    if (!name) {
-
-      throw new Error(
-        "DYMO printer name could not be determined."
-      );
-
-    }
-
-
-    const labelXml =
+    body.set(
+      "labelXml",
       buildLabelXml(
         child,
         note
-      );
+      )
+    );
 
 
-    const label =
-      framework.openLabelXml(
-        labelXml
+    body.set(
+      "labelSetXml",
+      ""
+    );
+
+
+    const response =
+      await fetchWithTimeout(
+        serviceUrl(
+          state.port,
+          "PrintLabel"
+        ),
+        {
+          method:
+            "POST",
+
+          headers: {
+            "Content-Type":
+              "application/x-www-form-urlencoded;charset=UTF-8"
+          },
+
+          body:
+            body.toString()
+        },
+        10000
       );
 
 
     if (
-      label &&
-      typeof label.isValidLabel ===
-        "function" &&
-      !label.isValidLabel()
+      !response.ok
     ) {
+
+      const message =
+        await response.text();
+
 
       throw new Error(
-        "DYMO rejected the child label template."
+        message ||
+        "DYMO print request failed."
       );
 
     }
-
-
-    if (
-      typeof framework.printLabel ===
-      "function"
-    ) {
-
-      framework.printLabel(
-        name,
-        "",
-        labelXml,
-        ""
-      );
-
-      return;
-
-    }
-
-
-    if (
-      label &&
-      typeof label.print ===
-        "function"
-    ) {
-
-      label.print(
-        name,
-        "",
-        ""
-      );
-
-      return;
-
-    }
-
-
-    throw new Error(
-      "DYMO print function is unavailable."
-    );
 
   }
 
 
   /* ==========================================================================
-  REPRINT BUTTON
+  PRINT ALL CHILD LABELS
   ========================================================================== */
 
   function revealReprint() {
@@ -1433,16 +1268,14 @@
 
 
     if (button) {
+
       button.hidden =
         false;
+
     }
 
   }
 
-
-  /* ==========================================================================
-  PRINT CHILD LABELS
-  ========================================================================== */
 
   async function printLabels(
     children,
@@ -1462,7 +1295,7 @@
         ok: false,
         printed: 0,
         reason:
-          "No children were supplied for label printing."
+          "No children supplied."
       };
 
     }
@@ -1472,9 +1305,13 @@
 
       children:
         rows.map(
-          (child) => ({
-            ...child
-          })
+          function (child) {
+
+            return {
+              ...child
+            };
+
+          }
         ),
 
       note:
@@ -1492,16 +1329,13 @@
     }
 
 
-    if (
-      !state.ready ||
-      !state.printer
-    ) {
+    if (!state.ready) {
 
       revealReprint();
 
 
       toast(
-        "Check-in is saved, but the DYMO printer is unavailable. Reconnect it and use Reprint Child Label(s).",
+        "Check-in is saved, but the DYMO printer is unavailable.",
         "error"
       );
 
@@ -1510,15 +1344,18 @@
         ok: false,
         printed: 0,
         reason:
-          "DYMO printer unavailable."
+          "DYMO unavailable."
       };
 
     }
 
 
-    let printed = 0;
+    let printed =
+      0;
 
-    const errors = [];
+
+    const errors =
+      [];
 
 
     for (
@@ -1533,8 +1370,7 @@
         );
 
 
-        printed += 1;
-
+        printed++;
 
       } catch (error) {
 
@@ -1562,7 +1398,7 @@
         printed +
         " of " +
         rows.length +
-        " child label(s). " +
+        " label(s). " +
         errors[0],
         "error"
       );
@@ -1570,7 +1406,8 @@
 
       return {
 
-        ok: false,
+        ok:
+          false,
 
         printed:
           printed,
@@ -1595,20 +1432,19 @@
           : "Printed "
       ) +
       printed +
-      " child label" +
       (
         printed === 1
-          ? ""
-          : "s"
-      ) +
-      ".",
+          ? " child label."
+          : " child labels."
+      ),
       "success"
     );
 
 
     return {
 
-      ok: true,
+      ok:
+        true,
 
       printed:
         printed,
@@ -1617,90 +1453,9 @@
         rows.length,
 
       printerName:
-        printerName(
-          state.printer
-        )
+        state.printerName
 
     };
-
-  }
-
-
-  /* ==========================================================================
-  LOAD DYMO SDK
-  ========================================================================== */
-
-  function loadSdk() {
-
-    ensureUi();
-
-
-    if (
-      getFramework()
-    ) {
-
-      setTimeout(
-        refreshPrinter,
-        250
-      );
-
-      return;
-
-    }
-
-
-    if (
-      document.querySelector(
-        'script[data-dymo-sdk="true"]'
-      )
-    ) {
-
-      return;
-
-    }
-
-
-    const script =
-      document.createElement(
-        "script"
-      );
-
-
-    script.src =
-      SDK_URL;
-
-    script.async =
-      true;
-
-    script.dataset.dymoSdk =
-      "true";
-
-
-    script.onload =
-      () => {
-
-        setTimeout(
-          refreshPrinter,
-          500
-        );
-
-      };
-
-
-    script.onerror =
-      () => {
-
-        updateStatus(
-          "DYMO SDK unavailable",
-          "offline"
-        );
-
-      };
-
-
-    document.head.appendChild(
-      script
-    );
 
   }
 
@@ -1719,20 +1474,25 @@
         refreshPrinter,
 
       getStatus:
-        () => ({
+        function () {
 
-          ready:
-            state.ready,
+          return {
 
-          status:
-            state.status,
+            ready:
+              state.ready,
 
-          printerName:
-            printerName(
-              state.printer
-            )
+            status:
+              state.status,
 
-        })
+            printerName:
+              state.printerName,
+
+            port:
+              state.port
+
+          };
+
+        }
 
     });
 
@@ -1741,6 +1501,19 @@
   START
   ========================================================================== */
 
+  function start() {
+
+    ensureUi();
+
+
+    setTimeout(
+      refreshPrinter,
+      500
+    );
+
+  }
+
+
   if (
     document.readyState ===
     "loading"
@@ -1748,7 +1521,7 @@
 
     document.addEventListener(
       "DOMContentLoaded",
-      loadSdk,
+      start,
       {
         once: true
       }
@@ -1756,7 +1529,7 @@
 
   } else {
 
-    loadSdk();
+    start();
 
   }
 
