@@ -3,9 +3,17 @@
 
   const config = window.KIDS_CONFIG;
 
+  (function loadPrinterModule() {
+    if (document.querySelector('script[data-kids-printer="true"]')) return;
+    const script = document.createElement("script");
+    script.src = "./js/dymo-print.js?v=2.6.0";
+    script.async = true;
+    script.dataset.kidsPrinter = "true";
+    document.head.appendChild(script);
+  })();
+
   async function parseResponse(response) {
     const text = await response.text();
-
     let data;
 
     try {
@@ -15,9 +23,7 @@
     }
 
     if (!response.ok || data.ok === false) {
-      throw new Error(
-        data.error || "The request failed."
-      );
+      throw new Error(data.error || "The request failed.");
     }
 
     return data;
@@ -27,26 +33,16 @@
     const url = new URL(config.API_URL);
 
     Object.entries(params).forEach(([key, value]) => {
-      if (
-        value !== undefined &&
-        value !== null &&
-        value !== ""
-      ) {
-        url.searchParams.set(
-          key,
-          String(value)
-        );
+      if (value !== undefined && value !== null && value !== "") {
+        url.searchParams.set(key, String(value));
       }
     });
 
-    const response = await fetch(
-      url.toString(),
-      {
-        method: "GET",
-        redirect: "follow",
-        cache: "no-store"
-      }
-    );
+    const response = await fetch(url.toString(), {
+      method: "GET",
+      redirect: "follow",
+      cache: "no-store"
+    });
 
     return parseResponse(response);
   }
@@ -55,28 +51,27 @@
     const body = new URLSearchParams();
 
     Object.entries(payload).forEach(([key, value]) => {
-      body.set(
-        key,
-        typeof value === "string"
-          ? value
-          : JSON.stringify(value)
-      );
+      body.set(key, typeof value === "string" ? value : JSON.stringify(value));
     });
 
-    const response = await fetch(
-      config.API_URL,
-      {
-        method: "POST",
-        redirect: "follow",
-        headers: {
-          "Content-Type":
-            "application/x-www-form-urlencoded;charset=UTF-8"
-        },
-        body
-      }
-    );
+    const response = await fetch(config.API_URL, {
+      method: "POST",
+      redirect: "follow",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"
+      },
+      body
+    });
 
     return parseResponse(response);
+  }
+
+  async function waitForPrinterModule(timeoutMs = 3000) {
+    const started = Date.now();
+    while (!window.KidsPrinter && Date.now() - started < timeoutMs) {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    }
+    return window.KidsPrinter || null;
   }
 
   window.KidsAPI = Object.freeze({
@@ -85,115 +80,74 @@
 
     getPeople: async (forceRefresh = false) => {
       const result = forceRefresh
-        ? await get({
-            action: "refreshRoster"
-          })
-        : await get({
-            action: "roster"
-          });
+        ? await get({ action: "refreshRoster" })
+        : await get({ action: "roster" });
 
       return {
         ok: true,
-        rows: Array.isArray(result.roster)
-          ? result.roster
-          : [],
-        lastRefresh:
-          result.lastRefresh || ""
+        rows: Array.isArray(result.roster) ? result.roster : [],
+        lastRefresh: result.lastRefresh || ""
       };
     },
 
-    submitAttendance: async ({
-      people,
-      children,
-      noteText,
-      note
-    }) => {
-      const selected =
-        Array.isArray(children)
-          ? children
-          : Array.isArray(people)
-            ? people
-            : [];
+    submitAttendance: async ({ people, children, noteText, note }) => {
+      const selected = Array.isArray(children)
+        ? children
+        : Array.isArray(people)
+          ? people
+          : [];
 
-      return post({
+      const finalNote = note ?? noteText ?? "";
+
+      // Save attendance and send the parent PIN first.
+      // Printing is intentionally non-fatal after the backend succeeds.
+      const result = await post({
         action: "checkin",
         children: selected,
-        note:
-          note ??
-          noteText ??
-          ""
+        note: finalNote
       });
+
+      try {
+        const printer = await waitForPrinterModule();
+        result.labelPrint = printer
+          ? await printer.printLabels(selected, finalNote)
+          : { ok: false, printed: 0, reason: "DYMO printing module did not load." };
+      } catch (error) {
+        result.labelPrint = {
+          ok: false,
+          printed: 0,
+          reason: error.message || "DYMO label printing failed."
+        };
+      }
+
+      return result;
     },
 
-    verifyPickupCode: async (
-      pickupCode
-    ) => {
-      const result = await post({
-        action: "checkout",
-        code: pickupCode
-      });
+    verifyPickupCode: async (pickupCode) => {
+      const result = await post({ action: "checkout", code: pickupCode });
 
       return {
         ...result,
-        message:
-          result.message ||
-          "Pickup code verified.",
-        record:
-          result.record || {
-            code: pickupCode,
-            children: [],
-            checkedOutAt:
-              new Date().toLocaleString()
-          }
+        message: result.message || "Pickup code verified.",
+        record: result.record || {
+          code: pickupCode,
+          children: [],
+          checkedOutAt: new Date().toLocaleString()
+        }
       };
     },
 
-    history: async () => {
-      return post({
-        action: "history"
-      });
-    },
+    history: async () => post({ action: "history" }),
 
-    adminAuthenticate: async (adminPin) => {
-      return post({
-        action: "adminAuthenticate",
-        adminPin
-      });
-    },
+    adminAuthenticate: async (adminPin) => post({ action: "adminAuthenticate", adminPin }),
 
-    adminDashboard: async (adminPin) => {
-      return post({
-        action: "adminDashboard",
-        adminPin
-      });
-    },
+    adminDashboard: async (adminPin) => post({ action: "adminDashboard", adminPin }),
 
-    adminRefreshRoster: async (adminPin) => {
-      return post({
-        action: "adminRefreshRoster",
-        adminPin
-      });
-    },
+    adminRefreshRoster: async (adminPin) => post({ action: "adminRefreshRoster", adminPin }),
 
-    adminCheckout: async (
-      adminPin,
-      pickupCode
-    ) => {
-      return post({
-        action: "adminCheckout",
-        adminPin,
-        pickupCode
-      });
-    },
+    adminCheckout: async (adminPin, pickupCode) => post({ action: "adminCheckout", adminPin, pickupCode }),
 
-    adminInitializeSheet: async (
-      adminPin
-    ) => {
-      return post({
-        action: "adminInitializeSheet",
-        adminPin
-      });
-    }
+    adminInitializeSheet: async (adminPin) => post({ action: "adminInitializeSheet", adminPin })
 
   });
 
