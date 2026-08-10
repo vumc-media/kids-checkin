@@ -1,4 +1,5 @@
-const CACHE_NAME = "vumc-kids-v2-dymo-1";
+const CACHE_NAME = "vumc-kids-v2-individual-child-1";
+
 const APP_FILES = [
   "./",
   "./index.html",
@@ -7,6 +8,7 @@ const APP_FILES = [
   "./js/api.js",
   "./js/app.js",
   "./js/dymo-print.js",
+  "./js/child-checkin.js",
   "./manifest.json",
   "./media/vumc-kids-pco.png"
 ];
@@ -22,7 +24,9 @@ self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
       Promise.all(
-        keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
+        keys
+          .filter((key) => key !== CACHE_NAME)
+          .map((key) => caches.delete(key))
       )
     )
   );
@@ -45,7 +49,9 @@ self.addEventListener("fetch", (event) => {
     fetch(event.request)
       .then((response) => {
         const copy = response.clone();
-        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+        caches
+          .open(CACHE_NAME)
+          .then((cache) => cache.put(event.request, copy));
         return response;
       })
       .catch(() => caches.match(event.request))
