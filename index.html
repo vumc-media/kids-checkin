@@ -2,17 +2,30 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+
+  <meta
+    name="viewport"
+    content="width=device-width,initial-scale=1,viewport-fit=cover"
+  >
+
   <meta name="theme-color" content="#0b2a52">
   <meta name="description" content="VUMC Kids Check-In kiosk">
+
   <link rel="manifest" href="./manifest.json">
-  <link rel="stylesheet" href="./css/app.css?v=2.7.0">
+  <link rel="stylesheet" href="./css/app.css?v=2.7.1">
+
   <title>VUMC Kids Check-In</title>
 </head>
+
 <body>
+
+  <!-- ============================================================
+       LANDING SCREEN
+       ============================================================ -->
 
   <section id="landingScreen" class="landing-screen">
     <div class="landing-card">
+
       <img
         class="landing-logo"
         src="./media/vumc-kids-pco.png"
@@ -21,39 +34,74 @@
 
       <div class="landing-copy">
         <p class="landing-eyebrow">Welcome to</p>
+
         <h1>VUMC Kids Check-In</h1>
-        <p>We're glad you're here. Select an option below to begin.</p>
+
+        <p>
+          We're glad you're here. Select an option below to begin.
+        </p>
       </div>
 
+
+      <!-- Landing Actions -->
+
       <div class="landing-actions">
-        <button id="landingCheckinBtn" class="landing-action checkin-action" type="button">
+
+        <button
+          id="landingCheckinBtn"
+          class="landing-action checkin-action"
+          type="button"
+        >
           <span class="landing-action-icon">✓</span>
+
           <span>
             <strong>Check In</strong>
             <small>Find returning children</small>
           </span>
         </button>
 
-        <button id="landingGuestBtn" class="landing-action guest-action" type="button">
+
+        <button
+          id="landingGuestBtn"
+          class="landing-action guest-action"
+          type="button"
+        >
           <span class="landing-action-icon">＋</span>
+
           <span>
             <strong>First Time Guest</strong>
             <small>Register and check in a new child</small>
           </span>
         </button>
 
-        <button id="landingPickupBtn" class="landing-action pickup-action" type="button">
+
+        <button
+          id="landingPickupBtn"
+          class="landing-action pickup-action"
+          type="button"
+        >
           <span class="landing-action-icon">→</span>
+
           <span>
             <strong>Pick Up</strong>
             <small>Enter your pickup code</small>
           </span>
         </button>
+
       </div>
 
+
+      <!-- Administrator -->
+
       <div class="landing-admin">
-        <a href="./admin/" class="landing-admin-card" title="Administrator" aria-label="Open Administrator">
+        <a
+          href="./admin/"
+          class="landing-admin-card"
+          title="Administrator"
+          aria-label="Open Administrator"
+        >
           <span class="landing-admin-icon">⚙</span>
+
           <span>
             <strong>Administrator</strong>
             <small>Staff Access</small>
@@ -61,90 +109,243 @@
         </a>
       </div>
 
+
+      <!-- Ministry Footer -->
+
       <p class="landing-footer">
-        <span class="love">LOVE</span> •
-        <span class="grow">GROW</span> •
+        <span class="love">LOVE</span>
+        •
+        <span class="grow">GROW</span>
+        •
         <span class="serve">SERVE</span>
       </p>
 
+
+      <!-- Backend Status -->
+
       <div class="landing-status">
-        <span id="landingBackendDot" class="status-dot"></span>
-        <span id="landingBackendText">Connecting to check-in service…</span>
+        <span
+          id="landingBackendDot"
+          class="status-dot"
+        ></span>
+
+        <span id="landingBackendText">
+          Connecting to check-in service…
+        </span>
       </div>
+
     </div>
   </section>
 
+
+
+  <!-- ============================================================
+       MAIN APPLICATION
+       ============================================================ -->
+
   <div id="appContent" class="app-content hidden">
+
+    <!-- Header -->
+
     <header class="app-header">
+
       <div class="brand">
-        <div class="brand-mark">✦</div>
+
+        <div class="brand-mark">
+          ✦
+        </div>
+
         <div>
           <h1>VUMC Kids</h1>
           <p>Check-In</p>
         </div>
+
       </div>
 
+
       <div class="header-actions">
-        <button id="homeBtn" class="home-btn" type="button">Home</button>
+
+        <button
+          id="homeBtn"
+          class="home-btn"
+          type="button"
+        >
+          Home
+        </button>
+
+
         <button
           id="refreshRosterBtn"
           class="icon-btn"
           type="button"
           title="Refresh Planning Center roster"
           aria-label="Refresh Planning Center roster"
-        >↻</button>
+        >
+          ↻
+        </button>
+
 
         <div class="backend-pill">
-          <span id="backendDot" class="status-dot"></span>
-          <span id="backendText">Connecting…</span>
+
+          <span
+            id="backendDot"
+            class="status-dot"
+          ></span>
+
+          <span id="backendText">
+            Connecting…
+          </span>
+
         </div>
+
       </div>
+
     </header>
 
+
+
+    <!-- ==========================================================
+         APP CONTENT
+         ========================================================== -->
+
     <main class="app-shell">
+
+
+      <!-- Navigation Tabs -->
+
       <nav class="nav-tabs">
-        <button class="nav-btn active" data-view="checkinView" type="button">Check In</button>
-        <button class="nav-btn" data-view="guestView" type="button">Guest Check-In</button>
-        <button class="nav-btn" data-view="pickupView" type="button">Pickup</button>
+
+        <button
+          class="nav-btn active"
+          data-view="checkinView"
+          type="button"
+        >
+          Check In
+        </button>
+
+
+        <button
+          class="nav-btn"
+          data-view="guestView"
+          type="button"
+        >
+          Guest Check-In
+        </button>
+
+
+        <button
+          class="nav-btn"
+          data-view="pickupView"
+          type="button"
+        >
+          Pickup
+        </button>
+
       </nav>
 
-      <section id="checkinView" class="view active">
+
+
+      <!-- ========================================================
+           FAMILY CHECK-IN
+           ======================================================== -->
+
+      <section
+        id="checkinView"
+        class="view active"
+      >
+
         <div class="panel">
+
           <div class="panel-header">
+
             <div>
               <h2>Family Check-In</h2>
-              <p>Search by last name, parent, guardian, or child.</p>
+
+              <p>
+                Search by last name, parent, guardian, or child.
+              </p>
             </div>
+
           </div>
 
+
           <div class="panel-body">
+
+
+            <!-- Search -->
+
             <div class="toolbar search-toolbar">
+
               <div class="field">
-                <label for="searchInput">Search Family</label>
+
+                <label for="searchInput">
+                  Search Family
+                </label>
+
                 <input
                   id="searchInput"
                   type="search"
                   placeholder="Type a last name..."
                   autocomplete="off"
                 >
+
               </div>
-              <button id="clearSearchBtn" class="btn secondary" type="button">Clear</button>
+
+
+              <button
+                id="clearSearchBtn"
+                class="btn secondary"
+                type="button"
+              >
+                Clear
+              </button>
+
             </div>
 
+
+
+            <!-- Roster -->
+
             <div class="roster-layout">
+
+
+              <!-- Search Results -->
+
               <div>
-                <div id="resultsList" class="results">
-                  <div class="empty">Loading families…</div>
+
+                <div
+                  id="resultsList"
+                  class="results"
+                >
+                  <div class="empty">
+                    Loading families…
+                  </div>
                 </div>
+
               </div>
 
+
+
+              <!-- Selected Children -->
+
               <aside class="selection-card sticky-selection-card">
-                <h3>Today's Check-In</h3>
+
+                <h3>
+                  Today's Check-In
+                </h3>
+
+
                 <p class="selection-help">
-                  Check only the children who are present. Each child can have a separate room and note.
+                  Check only the children who are present.
+                  Each child can have a separate room and note.
                 </p>
 
-                <div id="selectedList" class="selected-list"></div>
+
+                <div
+                  id="selectedList"
+                  class="selected-list"
+                ></div>
+
 
                 <button
                   id="submitCheckinBtn"
@@ -155,120 +356,399 @@
                   Complete Check-In
                 </button>
 
-                <div id="checkinNotice" class="notice hidden"></div>
+
+                <div
+                  id="checkinNotice"
+                  class="notice hidden"
+                ></div>
+
               </aside>
+
             </div>
+
           </div>
+
         </div>
+
       </section>
 
-      <section id="guestView" class="view">
+
+
+      <!-- ========================================================
+           FIRST-TIME GUEST CHECK-IN
+           ======================================================== -->
+
+      <section
+        id="guestView"
+        class="view"
+      >
+
         <div class="panel">
+
+
+          <!-- Guest Header -->
+
           <div class="panel-header">
+
             <div>
-              <h2>Guest Check-In</h2>
-              <p>Use this for a child who is not yet in the Planning Center roster.</p>
+
+              <h2>
+                Guest Check-In
+              </h2>
+
+              <p>
+                Use this for a child who is not yet in the
+                Planning Center roster.
+              </p>
+
             </div>
+
           </div>
 
-          <form id="guestForm" class="panel-body">
+
+
+          <!-- Guest Form -->
+
+          <form
+            id="guestForm"
+            class="panel-body"
+          >
+
             <div class="form-grid">
-              <div class="field">
-                <label for="guestChildFirst">Child first name</label>
-                <input id="guestChildFirst" required>
-              </div>
+
+
+              <!-- Child First Name -->
 
               <div class="field">
-                <label for="guestChildLast">Child last name</label>
-                <input id="guestChildLast">
+
+                <label for="guestChildFirst">
+                  Child first name
+                </label>
+
+                <input
+                  id="guestChildFirst"
+                  type="text"
+                  autocomplete="given-name"
+                  required
+                >
+
               </div>
 
-              <div class="field">
-                <label for="guestParentName">Parent / guardian name</label>
-                <input id="guestParentName" required>
-              </div>
+
+
+              <!-- Child Last Name -->
 
               <div class="field">
-                <label for="guestPhone">Parent mobile number</label>
-                <input id="guestPhone" type="tel" required>
+
+                <label for="guestChildLast">
+                  Child last name
+                </label>
+
+                <input
+                  id="guestChildLast"
+                  type="text"
+                  autocomplete="family-name"
+                >
+
               </div>
 
-              <div class="field">
-                <label for="guestGrade">Age / grade</label>
-                <input id="guestGrade">
-              </div>
+
+
+              <!-- Parent / Guardian -->
 
               <div class="field">
-                <label for="guestRoom">Room / group</label>
-                <select id="guestRoom">
-                  <option>Nursery</option>
-                  <option>Sunday School</option>
-                  <option>Children's Church</option>
-                  <option>Wednesday Kids</option>
+
+                <label for="guestParentName">
+                  Parent / guardian name
+                </label>
+
+                <input
+                  id="guestParentName"
+                  type="text"
+                  autocomplete="name"
+                  required
+                >
+
+              </div>
+
+
+
+              <!-- Parent Email -->
+
+              <div class="field">
+
+                <label for="guestEmail">
+                  Parent / guardian email
+                </label>
+
+                <input
+                  id="guestEmail"
+                  type="email"
+                  placeholder="parent@example.com"
+                  autocomplete="email"
+                  inputmode="email"
+                  required
+                >
+
+              </div>
+
+
+
+              <!-- Age / Grade -->
+
+              <div class="field">
+
+                <label for="guestGrade">
+                  Age / grade
+                </label>
+
+                <input
+                  id="guestGrade"
+                  type="text"
+                  placeholder="Example: Age 6 / 1st Grade"
+                >
+
+              </div>
+
+
+
+              <!-- Room -->
+
+              <div class="field">
+
+                <label for="guestRoom">
+                  Room / group
+                </label>
+
+                <select
+                  id="guestRoom"
+                  required
+                >
+
+                  <option value="Nursery">
+                    Nursery
+                  </option>
+
+                  <option value="Sunday School">
+                    Sunday School
+                  </option>
+
+                  <option value="Children's Church">
+                    Children's Church
+                  </option>
+
+                  <option value="Wednesday Kids">
+                    Wednesday Kids
+                  </option>
+
                 </select>
+
               </div>
+
+
+
+              <!-- Notes -->
 
               <div class="field full">
-                <label for="guestNotes">Allergies / notes</label>
-                <textarea id="guestNotes" rows="4"></textarea>
+
+                <label for="guestNotes">
+                  Allergies / notes
+                </label>
+
+                <textarea
+                  id="guestNotes"
+                  rows="4"
+                  placeholder="Allergies, medical information, special instructions, or other notes"
+                ></textarea>
+
               </div>
+
             </div>
 
-            <button class="btn success" type="submit">Check In Guest</button>
-            <div id="guestNotice" class="notice hidden"></div>
+
+
+            <!-- Submit -->
+
+            <button
+              class="btn success"
+              type="submit"
+            >
+              Check In Guest
+            </button>
+
+
+            <div
+              id="guestNotice"
+              class="notice hidden"
+            ></div>
+
           </form>
+
         </div>
+
       </section>
 
-      <section id="pickupView" class="view">
+
+
+      <!-- ========================================================
+           PICKUP
+           ======================================================== -->
+
+      <section
+        id="pickupView"
+        class="view"
+      >
+
         <div class="panel">
+
+
           <div class="panel-header">
+
             <div>
-              <h2>Verify Pickup</h2>
-              <p>Enter the four-character pickup code.</p>
+
+              <h2>
+                Verify Pickup
+              </h2>
+
+              <p>
+                Enter the four-character pickup code.
+              </p>
+
             </div>
+
           </div>
 
+
+
           <div class="panel-body pickup-panel">
+
+
             <div class="field pickup-field">
-              <label for="pickupCodeInput">Pickup code</label>
-              <input id="pickupCodeInput" maxlength="4" autocomplete="off" placeholder="A7KD">
+
+              <label for="pickupCodeInput">
+                Pickup code
+              </label>
+
+              <input
+                id="pickupCodeInput"
+                maxlength="4"
+                autocomplete="off"
+                autocapitalize="characters"
+                spellcheck="false"
+                placeholder="A7KD"
+              >
+
             </div>
 
-            <button id="verifyPickupBtn" class="btn primary" type="button">
+
+
+            <button
+              id="verifyPickupBtn"
+              class="btn primary"
+              type="button"
+            >
               Verify and Check Out
             </button>
 
-            <div id="pickupNotice" class="notice hidden"></div>
-            <div id="pickupResult" class="pickup-result hidden"></div>
+
+
+            <div
+              id="pickupNotice"
+              class="notice hidden"
+            ></div>
+
+
+
+            <div
+              id="pickupResult"
+              class="pickup-result hidden"
+            ></div>
+
           </div>
+
         </div>
+
       </section>
 
-      <section id="successScreen" class="view">
+
+
+      <!-- ========================================================
+           SUCCESS SCREEN
+           ======================================================== -->
+
+      <section
+        id="successScreen"
+        class="view"
+      >
+
         <div class="panel success-screen">
-          <div class="success-icon">✓</div>
-          <h2>Check-In Complete</h2>
+
+
+          <div class="success-icon">
+            ✓
+          </div>
+
+
+          <h2>
+            Check-In Complete
+          </h2>
+
+
           <p id="successNames"></p>
 
-          <div class="pickup-code" id="successCode"></div>
 
-          <p>Keep this pickup code. Staff will use it when the child is picked up.</p>
-          <p id="successEmailStatus" class="success-email-status"></p>
-          <p id="nextFamilyCountdown" class="next-family-countdown">
+          <div
+            class="pickup-code"
+            id="successCode"
+          ></div>
+
+
+          <p>
+            Keep this pickup code.
+            Staff will use it when the child is picked up.
+          </p>
+
+
+          <p
+            id="successEmailStatus"
+            class="success-email-status"
+          ></p>
+
+
+          <p
+            id="nextFamilyCountdown"
+            class="next-family-countdown"
+          >
             Ready for the next family in 8 seconds…
           </p>
 
-          <button id="newCheckinBtn" class="btn primary" type="button">
+
+          <button
+            id="newCheckinBtn"
+            class="btn primary"
+            type="button"
+          >
             Next Family
           </button>
+
         </div>
+
       </section>
+
+
     </main>
+
   </div>
 
-  <script src="./js/config.js?v=2.7.0"></script>
-  <script src="./js/api.js?v=2.7.0"></script>
-  <script src="./js/app.js?v=2.7.0"></script>
+
+
+  <!-- ============================================================
+       JAVASCRIPT
+       ============================================================ -->
+
+  <script src="./js/config.js?v=2.7.1"></script>
+  <script src="./js/api.js?v=2.7.1"></script>
+  <script src="./js/app.js?v=2.7.1"></script>
+
 </body>
 </html>
