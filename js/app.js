@@ -232,7 +232,6 @@
 
     let seconds = 8;
 
-
     const paint = () => {
 
       if (!refs.nextFamilyCountdown) {
@@ -243,15 +242,12 @@
         `Ready for the next family in ${seconds} second${seconds === 1 ? "" : "s"}…`;
     };
 
-
     paint();
-
 
     nextFamilyTimer =
       setInterval(() => {
 
         seconds -= 1;
-
 
         if (seconds <= 0) {
 
@@ -262,7 +258,6 @@
           return;
         }
 
-
         paint();
 
       }, 1000);
@@ -272,7 +267,6 @@
   function returnHome() {
 
     clearNextFamilyTimer();
-
 
     /*
      * Remove ?view=pickup when the
@@ -296,7 +290,6 @@
         homeUrl.hash
     );
 
-
     refs.appContent
       .classList
       .add("hidden");
@@ -305,7 +298,6 @@
       .classList
       .remove("hidden");
 
-
     [
       refs.checkinNotice,
       refs.guestNotice,
@@ -313,7 +305,6 @@
     ].forEach(
       hideNotice
     );
-
 
     if (refs.pickupResult) {
 
@@ -325,16 +316,13 @@
         "";
     }
 
-
     if (refs.pickupCodeInput) {
 
       refs.pickupCodeInput.value =
         "";
     }
 
-
     resetCheckinState();
-
 
     window.scrollTo({
       top: 0
@@ -353,42 +341,32 @@
       const result =
         await KidsAPI.health();
 
-
       refs.backendDot.className =
         "status-dot online";
-
 
       refs.backendText.textContent =
         result.message ||
         "Backend online";
 
-
       refs.landingBackendDot.className =
         "status-dot online";
-
 
       refs.landingBackendText.textContent =
         "Check-in service ready";
 
-
     } catch (_) {
-
 
       refs.backendDot.className =
         "status-dot offline";
 
-
       refs.backendText.textContent =
         "Backend unavailable";
-
 
       refs.landingBackendDot.className =
         "status-dot offline";
 
-
       refs.landingBackendText.textContent =
         "Check-in service unavailable";
-
     }
   }
 
@@ -402,7 +380,6 @@
     if (!person) {
       return "";
     }
-
 
     return (
       person.name ||
@@ -446,7 +423,6 @@
     const households =
       new Map();
 
-
     const eligibleChildren =
       new Map(
 
@@ -459,10 +435,8 @@
 
       );
 
-
     state.people.forEach(
       (person) => {
-
 
         const personHouseholds =
           Array.isArray(
@@ -473,7 +447,6 @@
 
             : [];
 
-
         /*
          * Person does not have
          * household information.
@@ -483,19 +456,16 @@
           !personHouseholds.length
         ) {
 
-
           const fallbackId =
             `person-${String(
               person.id
             )}`;
-
 
           if (
             !households.has(
               fallbackId
             )
           ) {
-
 
             households.set(
               fallbackId,
@@ -523,14 +493,11 @@
 
           }
 
-
           return;
         }
 
-
         personHouseholds.forEach(
           (household) => {
-
 
             const id =
               String(
@@ -545,11 +512,9 @@
 
               );
 
-
             if (
               !households.has(id)
             ) {
-
 
               households.set(
                 id,
@@ -577,10 +542,8 @@
 
             }
 
-
             const family =
               households.get(id);
-
 
             const members =
               Array.isArray(
@@ -591,10 +554,8 @@
 
                 : [];
 
-
             members.forEach(
               (member) => {
-
 
                 const memberId =
                   String(
@@ -602,17 +563,14 @@
                     ""
                   );
 
-
                 if (
                   member.child
                 ) {
-
 
                   const eligibleChild =
                     eligibleChildren.get(
                       memberId
                     );
-
 
                   if (
 
@@ -628,13 +586,11 @@
 
                   ) {
 
-
                     family.children.push(
                       eligibleChild
                     );
 
                   }
-
 
                 } else if (
 
@@ -649,7 +605,6 @@
                   )
 
                 ) {
-
 
                   family.adults.push({
                     id:
@@ -666,12 +621,10 @@
               }
             );
 
-
             const currentId =
               String(
                 person.id
               );
-
 
             if (
 
@@ -685,7 +638,6 @@
 
             ) {
 
-
               family.children.push(
                 person
               );
@@ -697,7 +649,6 @@
 
       }
     );
-
 
     state.households =
       [...households.values()]
@@ -713,7 +664,6 @@
           (household) => ({
 
             ...household,
-
 
             adults:
               household.adults
@@ -734,7 +684,6 @@
                       }
                     )
                 ),
-
 
             children:
               household.children
@@ -777,10 +726,8 @@
     force = false
   ) {
 
-
     refs.resultsList.innerHTML =
       '<div class="empty">Loading families…</div>';
-
 
     setBusy(
       refs.refreshRosterBtn,
@@ -790,14 +737,11 @@
         : "Loading…"
     );
 
-
     try {
-
 
       const result =
         await KidsAPI
           .getPeople(force);
-
 
       state.people =
         Array.isArray(
@@ -814,14 +758,11 @@
 
             : [];
 
-
       buildHouseholdIndex();
 
       filterRoster();
 
-
     } catch (error) {
-
 
       refs.resultsList.innerHTML =
         `
@@ -833,9 +774,7 @@
           </div>
         `;
 
-
     } finally {
-
 
       setBusy(
         refs.refreshRosterBtn,
@@ -852,11 +791,9 @@
 
   function renderAlphabet() {
 
-
     const letters =
       "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
         .split("");
-
 
     return `
       <div class="alphabet-filter">
@@ -897,7 +834,6 @@
 
   function renderSearchPrompt() {
 
-
     refs.resultsList.innerHTML =
       `
         ${renderAlphabet()}
@@ -916,17 +852,14 @@
     household
   ) {
 
-
     return [
 
       household.name,
-
 
       ...household.adults.map(
         (adult) =>
           adult.name
       ),
-
 
       ...household.children.map(
         (child) =>
@@ -946,7 +879,6 @@
   function isHouseholdLoaded(
     household
   ) {
-
 
     return household.children.some(
       (child) =>
@@ -968,11 +900,9 @@
     households
   ) {
 
-
     if (
       !households.length
     ) {
-
 
       refs.resultsList.innerHTML =
         `
@@ -983,10 +913,8 @@
           </div>
         `;
 
-
       return;
     }
-
 
     refs.resultsList.innerHTML =
       `
@@ -998,12 +926,10 @@
             households.map(
               (household) => {
 
-
                 const loaded =
                   isHouseholdLoaded(
                     household
                   );
-
 
                 const adultNames =
                   household.adults
@@ -1014,7 +940,6 @@
                     )
 
                     .filter(Boolean);
-
 
                 const childNames =
                   household.children
@@ -1028,18 +953,15 @@
 
                     .filter(Boolean);
 
-
                 return `
 
                   <article
                     class="household-card"
                   >
 
-
                     <div
                       class="household-card-content"
                     >
-
 
                       <div
                         class="household-name"
@@ -1050,7 +972,6 @@
                         )}
 
                       </div>
-
 
                       ${
                         adultNames.length
@@ -1084,7 +1005,6 @@
                           : ""
                       }
 
-
                       <div
                         class="household-section"
                       >
@@ -1107,9 +1027,7 @@
 
                       </div>
 
-
                     </div>
-
 
                     <button
 
@@ -1137,7 +1055,6 @@
 
                     </button>
 
-
                   </article>
 
                 `;
@@ -1153,14 +1070,12 @@
 
   function filterRoster() {
 
-
     const query =
       refs.searchInput.value
 
         .trim()
 
         .toLowerCase();
-
 
     if (
 
@@ -1170,26 +1085,21 @@
 
     ) {
 
-
       renderSearchPrompt();
 
       return;
     }
 
-
     let filtered =
       state.households;
-
 
     if (
       state.activeLetter
     ) {
 
-
       filtered =
         filtered.filter(
           (household) => {
-
 
             const familyName =
               household.name
@@ -1200,7 +1110,6 @@
                 )
 
                 .trim();
-
 
             return familyName
 
@@ -1215,9 +1124,7 @@
 
     }
 
-
     if (query) {
-
 
       filtered =
         filtered.filter(
@@ -1231,7 +1138,6 @@
         );
 
     }
-
 
     renderHouseholds(
       filtered
@@ -1247,7 +1153,6 @@
     householdId
   ) {
 
-
     const household =
       state.households.find(
         (item) =>
@@ -1256,20 +1161,16 @@
           String(householdId)
       );
 
-
     if (!household) {
       return;
     }
-
 
     const loaded =
       isHouseholdLoaded(
         household
       );
 
-
     if (loaded) {
-
 
       household.children.forEach(
         (child) =>
@@ -1281,19 +1182,15 @@
           )
       );
 
-
     } else {
-
 
       household.children.forEach(
         (child) => {
-
 
           const id =
             String(
               child.id
             );
-
 
           state.selected.set(
             id,
@@ -1324,7 +1221,6 @@
 
     }
 
-
     renderSelected();
 
     filterRoster();
@@ -1332,7 +1228,6 @@
 
 
   function presentChildren() {
-
 
     return [
       ...state.selected.values()
@@ -1347,7 +1242,6 @@
 
   function updateSubmitState() {
 
-
     refs.submitCheckinBtn.disabled =
       presentChildren()
         .length === 0;
@@ -1360,29 +1254,23 @@
 
   function renderSelected() {
 
-
     const people =
       [
         ...state.selected.values()
       ];
 
-
     if (
       !people.length
     ) {
 
-
       refs.selectedList.innerHTML =
         '<div class="empty">No family selected.</div>';
-
 
       refs.submitCheckinBtn.disabled =
         true;
 
-
       return;
     }
-
 
     refs.selectedList.innerHTML =
       people
@@ -1403,16 +1291,13 @@
         .map(
           (person) => {
 
-
             const id =
               escapeHtml(
                 person.id
               );
 
-
             const present =
               !!person.present;
-
 
             return `
 
@@ -1428,21 +1313,17 @@
 
               >
 
-
                 <div
                   class="selected-child-header"
                 >
-
 
                   <div
                     class="selected-child-title"
                   >
 
-
                     <label
                       class="present-check"
                     >
-
 
                       <input
 
@@ -1460,14 +1341,11 @@
 
                       >
 
-
                       <span>
                         Present
                       </span>
 
-
                     </label>
-
 
                     <strong>
 
@@ -1479,9 +1357,7 @@
 
                     </strong>
 
-
                   </div>
-
 
                   <button
 
@@ -1503,9 +1379,7 @@
                     ×
                   </button>
 
-
                 </div>
-
 
                 <div
 
@@ -1517,18 +1391,15 @@
 
                 >
 
-
                   <div
                     class="field"
                   >
-
 
                     <label
                       for="service-${id}"
                     >
                       Service / Event
                     </label>
-
 
                     <select
 
@@ -1539,7 +1410,6 @@
                       data-person-id="${id}"
 
                     >
-
 
                       ${
                         [
@@ -1590,24 +1460,19 @@
                           .join("")
                       }
 
-
                     </select>
 
-
                   </div>
-
 
                   <div
                     class="field child-note"
                   >
-
 
                     <label
                       for="note-${id}"
                     >
                       Allergies / Notes
                     </label>
-
 
                     <textarea
 
@@ -1626,12 +1491,9 @@
                       ""
                     )}</textarea>
 
-
                   </div>
 
-
                 </div>
-
 
               </div>
 
@@ -1642,7 +1504,6 @@
 
         .join("");
 
-
     updateSubmitState();
   }
 
@@ -1651,11 +1512,9 @@
     id
   ) {
 
-
     state.selected.delete(
       String(id)
     );
-
 
     renderSelected();
 
@@ -1669,30 +1528,25 @@
 
   async function submitSelectedCheckin() {
 
-
     const people =
       presentChildren()
 
         .map(
           (person) => ({
 
-
             id:
               String(
                 person.id
               ),
-
 
             name:
               personName(
                 person
               ),
 
-
             service:
               person.service ||
               "Sunday School",
-
 
             note:
               String(
@@ -1700,10 +1554,8 @@
                 ""
               ).trim()
 
-
           })
         );
-
 
     if (
       !people.length
@@ -1711,11 +1563,9 @@
       return;
     }
 
-
     hideNotice(
       refs.checkinNotice
     );
-
 
     setBusy(
       refs.submitCheckinBtn,
@@ -1723,9 +1573,7 @@
       "Checking In…"
     );
 
-
     try {
-
 
       const aggregateNote =
         people
@@ -1744,7 +1592,6 @@
             " | "
           );
 
-
       const result =
         await KidsAPI
           .submitAttendance({
@@ -1762,7 +1609,6 @@
 
           });
 
-
       refs.successNames.textContent =
         people
 
@@ -1775,16 +1621,49 @@
             ", "
           );
 
-
       refs.successCode.textContent =
         result.pickupCode ||
         "—";
 
+      /*
+       * ==========================================================
+       * RETURNING FAMILY PRINTING
+       * ==========================================================
+       *
+       * Send ALL present children to the local printer service
+       * as ONE household.
+       *
+       * The Windows printer service creates ONE parent pickup
+       * label regardless of the number of checked-in children.
+       *
+       * IMPORTANT:
+       * Attendance has already been successfully saved above.
+       * Printer failure NEVER cancels the check-in.
+       * ==========================================================
+       */
+
+      if (window.KidsPrinter) {
+
+        window.KidsPrinter
+          .printLabels(
+            people,
+            {
+              mode: "household"
+            }
+          )
+          .catch((error) => {
+
+            console.error(
+              "Household label printing failed:",
+              error
+            );
+
+          });
+      }
 
       if (
         refs.successEmailStatus
       ) {
-
 
         refs.successEmailStatus.textContent =
           result.emailSent
@@ -1797,7 +1676,6 @@
 
             : "Pickup email was not sent. Please give the parent the code shown above.";
 
-
         refs.successEmailStatus.style.color =
           result.emailSent
             ? ""
@@ -1805,17 +1683,13 @@
 
       }
 
-
       switchView(
         "successScreen"
       );
 
-
       startNextFamilyCountdown();
 
-
     } catch (error) {
-
 
       showNotice(
         refs.checkinNotice,
@@ -1823,15 +1697,12 @@
         "error"
       );
 
-
     } finally {
-
 
       setBusy(
         refs.submitCheckinBtn,
         false
       );
-
 
       updateSubmitState();
 
@@ -1847,14 +1718,11 @@
     event
   ) {
 
-
     event.preventDefault();
-
 
     hideNotice(
       refs.guestNotice
     );
-
 
     const childFirst =
       $("#guestChildFirst")
@@ -1862,20 +1730,17 @@
         .trim() ||
       "";
 
-
     const childLast =
       $("#guestChildLast")
         ?.value
         .trim() ||
       "";
 
-
     const parentName =
       $("#guestParentName")
         ?.value
         .trim() ||
       "";
-
 
     const email =
       $("#guestEmail")
@@ -1884,26 +1749,22 @@
         .toLowerCase() ||
       "";
 
-
     const grade =
       $("#guestGrade")
         ?.value
         .trim() ||
       "";
 
-
     const room =
       $("#guestRoom")
         ?.value ||
       "Sunday School";
-
 
     const notes =
       $("#guestNotes")
         ?.value
         .trim() ||
       "";
-
 
     if (
 
@@ -1915,21 +1776,17 @@
 
     ) {
 
-
       showNotice(
         refs.guestNotice,
         "Enter the child name, parent or guardian, and email address.",
         "error"
       );
 
-
       return;
     }
 
-
     const emailPattern =
       /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
 
     if (
       !emailPattern.test(
@@ -1937,21 +1794,17 @@
       )
     ) {
 
-
       showNotice(
         refs.guestNotice,
         "Enter a valid parent or guardian email address.",
         "error"
       );
 
-
       $("#guestEmail")
         ?.focus();
 
-
       return;
     }
-
 
     const fullName =
       [
@@ -1962,7 +1815,6 @@
         .filter(Boolean)
 
         .join(" ");
-
 
     const noteText =
       [
@@ -1985,7 +1837,6 @@
 
         .join("\n");
 
-
     const people =
       [
         {
@@ -2005,13 +1856,11 @@
         }
       ];
 
-
     const button =
       refs.guestForm
         .querySelector(
           'button[type="submit"]'
         );
-
 
     setBusy(
       button,
@@ -2019,9 +1868,7 @@
       "Checking In…"
     );
 
-
     try {
-
 
       const result =
         await KidsAPI
@@ -2054,40 +1901,69 @@
 
           });
 
-
       refs.successNames.textContent =
         fullName;
-
 
       refs.successCode.textContent =
         result.pickupCode ||
         "—";
 
+      /*
+       * ==========================================================
+       * FIRST-TIME GUEST PRINTING
+       * ==========================================================
+       *
+       * Guest mode tells the Windows printer service to print:
+       *
+       *   1 parent pickup label with QR
+       *   PLUS
+       *   1 child badge per guest child
+       *
+       * The child badge does NOT contain the pickup QR.
+       *
+       * IMPORTANT:
+       * Attendance has already been successfully saved above.
+       * Printer failure NEVER cancels the check-in.
+       * ==========================================================
+       */
+
+      if (window.KidsPrinter) {
+
+        window.KidsPrinter
+          .printLabels(
+            people,
+            {
+              mode: "guest"
+            }
+          )
+          .catch((error) => {
+
+            console.error(
+              "Guest label printing failed:",
+              error
+            );
+
+          });
+      }
 
       if (
         refs.successEmailStatus
       ) {
 
-
         if (
           result.emailSent
         ) {
 
-
           refs.successEmailStatus.textContent =
             `Pickup code emailed to ${email}.`;
-
 
           refs.successEmailStatus.style.color =
             "";
 
-
         } else {
-
 
           refs.successEmailStatus.textContent =
             `Pickup email was not sent to ${email}. Please give the parent the code shown above.`;
-
 
           refs.successEmailStatus.style.color =
             "#9d2634";
@@ -2095,20 +1971,15 @@
         }
       }
 
-
       refs.guestForm.reset();
-
 
       switchView(
         "successScreen"
       );
 
-
       startNextFamilyCountdown();
 
-
     } catch (error) {
-
 
       showNotice(
         refs.guestNotice,
@@ -2116,9 +1987,7 @@
         "error"
       );
 
-
     } finally {
-
 
       setBusy(
         button,
@@ -2135,7 +2004,6 @@
 
   async function verifyPickup() {
 
-
     const code =
       refs.pickupCodeInput.value
 
@@ -2143,25 +2011,20 @@
 
         .toUpperCase();
 
-
     hideNotice(
       refs.pickupNotice
     );
-
 
     refs.pickupResult
       .classList
       .add("hidden");
 
-
     refs.pickupResult.innerHTML =
       "";
-
 
     if (
       code.length !== 4
     ) {
-
 
       showNotice(
         refs.pickupNotice,
@@ -2169,10 +2032,8 @@
         "error"
       );
 
-
       return;
     }
-
 
     setBusy(
       refs.verifyPickupBtn,
@@ -2180,9 +2041,7 @@
       "Verifying…"
     );
 
-
     try {
-
 
       const result =
         await KidsAPI
@@ -2190,11 +2049,9 @@
             code
           );
 
-
       const record =
         result.record ||
         {};
-
 
       const children =
         Array.isArray(
@@ -2205,14 +2062,12 @@
 
           : [];
 
-
       refs.pickupResult.innerHTML =
         `
 
           <h3>
             Pickup Verified
           </h3>
-
 
           <p>
 
@@ -2234,7 +2089,6 @@
 
           </p>
 
-
           <p>
 
             <strong>
@@ -2255,11 +2109,9 @@
 
         `;
 
-
       refs.pickupResult
         .classList
         .remove("hidden");
-
 
       showNotice(
         refs.pickupNotice,
@@ -2270,13 +2122,10 @@
         "success"
       );
 
-
       refs.pickupCodeInput.value =
         "";
 
-
     } catch (error) {
-
 
       showNotice(
         refs.pickupNotice,
@@ -2284,9 +2133,7 @@
         "error"
       );
 
-
     } finally {
-
 
       setBusy(
         refs.verifyPickupBtn,
@@ -2303,13 +2150,11 @@
 
   function registerEvents() {
 
-
     refs.landingCheckinBtn.onclick =
       () =>
         openApp(
           "checkinView"
         );
-
 
     refs.landingGuestBtn.onclick =
       () =>
@@ -2317,17 +2162,14 @@
           "guestView"
         );
 
-
     refs.landingPickupBtn.onclick =
       () =>
         openApp(
           "pickupView"
         );
 
-
     refs.homeBtn.onclick =
       returnHome;
-
 
     /*
      * Navigation tabs
@@ -2337,13 +2179,10 @@
       .forEach(
         (button) => {
 
-
           button.onclick =
             () => {
 
-
               clearNextFamilyTimer();
-
 
               switchView(
                 button.dataset.view
@@ -2354,7 +2193,6 @@
         }
       );
 
-
     /*
      * Family search
      */
@@ -2362,35 +2200,27 @@
     refs.searchInput.oninput =
       () => {
 
-
         state.activeLetter =
           "";
-
 
         filterRoster();
 
       };
-
 
     refs.clearSearchBtn.onclick =
       () => {
 
-
         refs.searchInput.value =
           "";
-
 
         state.activeLetter =
           "";
 
-
         filterRoster();
-
 
         refs.searchInput.focus();
 
       };
-
 
     /*
      * Roster refresh
@@ -2402,7 +2232,6 @@
           true
         );
 
-
     /*
      * Household results
      */
@@ -2410,23 +2239,19 @@
     refs.resultsList.onclick =
       (event) => {
 
-
         const letterButton =
           event.target.closest(
             ".letter-filter"
           );
 
-
         if (
           letterButton
         ) {
-
 
           const letter =
             letterButton
               .dataset
               .letter;
-
 
           state.activeLetter =
             state.activeLetter ===
@@ -2436,28 +2261,22 @@
 
               : letter;
 
-
           refs.searchInput.value =
             "";
 
-
           filterRoster();
-
 
           return;
         }
-
 
         const householdButton =
           event.target.closest(
             ".select-household"
           );
 
-
         if (
           householdButton
         ) {
-
 
           toggleHousehold(
             householdButton
@@ -2469,7 +2288,6 @@
 
       };
 
-
     /*
      * Remove selected child
      */
@@ -2477,17 +2295,14 @@
     refs.selectedList.onclick =
       (event) => {
 
-
         const button =
           event.target.closest(
             ".remove-selected"
           );
 
-
         if (
           button
         ) {
-
 
           removeSelectedPerson(
             button.dataset.personId
@@ -2497,7 +2312,6 @@
 
       };
 
-
     /*
      * Selected child changes
      */
@@ -2505,17 +2319,14 @@
     refs.selectedList.onchange =
       (event) => {
 
-
         const presentCheck =
           event.target.closest(
             ".child-present-check"
           );
 
-
         if (
           presentCheck
         ) {
-
 
           const id =
             String(
@@ -2524,41 +2335,33 @@
                 .personId
             );
 
-
           const person =
             state.selected.get(
               id
             );
 
-
           if (
             person
           ) {
 
-
             person.present =
               presentCheck.checked;
-
 
             renderSelected();
 
           }
 
-
           return;
         }
-
 
         const select =
           event.target.closest(
             ".child-service-select"
           );
 
-
         if (
           select
         ) {
-
 
           const person =
             state.selected.get(
@@ -2571,11 +2374,9 @@
 
             );
 
-
           if (
             person
           ) {
-
 
             person.service =
               select.value;
@@ -2584,7 +2385,6 @@
         }
       };
 
-
     /*
      * Child notes
      */
@@ -2592,19 +2392,16 @@
     refs.selectedList.oninput =
       (event) => {
 
-
         const note =
           event.target.closest(
             ".child-note-input"
           );
-
 
         if (
           !note
         ) {
           return;
         }
-
 
         const person =
           state.selected.get(
@@ -2617,11 +2414,9 @@
 
           );
 
-
         if (
           person
         ) {
-
 
           person.note =
             note.value;
@@ -2630,14 +2425,12 @@
 
       };
 
-
     /*
      * Submit regular check-in
      */
 
     refs.submitCheckinBtn.onclick =
       submitSelectedCheckin;
-
 
     /*
      * Submit guest check-in
@@ -2646,7 +2439,6 @@
     refs.guestForm.onsubmit =
       submitGuest;
 
-
     /*
      * Pickup
      */
@@ -2654,10 +2446,8 @@
     refs.verifyPickupBtn.onclick =
       verifyPickup;
 
-
     refs.pickupCodeInput.oninput =
       () => {
-
 
         refs.pickupCodeInput.value =
           refs.pickupCodeInput.value
@@ -2676,23 +2466,19 @@
 
       };
 
-
     refs.pickupCodeInput.onkeydown =
       (event) => {
-
 
         if (
           event.key ===
           "Enter"
         ) {
 
-
           verifyPickup();
 
         }
 
       };
-
 
     /*
      * Next family
@@ -2709,15 +2495,11 @@
 
   async function init() {
 
-
     bindRefs();
-
 
     registerEvents();
 
-
     renderSelected();
-
 
     /*
      * ==========================================================
@@ -2736,12 +2518,10 @@
      * ==========================================================
      */
 
-
     const params =
       new URLSearchParams(
         window.location.search
       );
-
 
     const requestedView =
       String(
@@ -2753,12 +2533,10 @@
 
         .toLowerCase();
 
-
     if (
       requestedView ===
       "pickup"
     ) {
-
 
       openApp(
         "pickupView"
@@ -2766,11 +2544,9 @@
 
     }
 
-
     /*
      * Backend and roster initialization
      */
-
 
     await Promise.all([
 
@@ -2780,17 +2556,14 @@
 
     ]);
 
-
     /*
      * Service Worker
      */
-
 
     if (
       "serviceWorker" in
       navigator
     ) {
-
 
       navigator
         .serviceWorker
