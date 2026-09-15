@@ -94,9 +94,11 @@
     }
 
     button.disabled = busy;
-    button.textContent = busy
-      ? busyLabel
-      : button.dataset.defaultLabel;
+
+    button.textContent =
+      busy
+        ? busyLabel
+        : button.dataset.defaultLabel;
   }
 
 
@@ -105,6 +107,7 @@
      ============================================================ */
 
   function switchView(id) {
+
     $$(".view").forEach((view) => {
       view.classList.remove("active");
     });
@@ -113,22 +116,35 @@
       button.classList.remove("active");
     });
 
-    document.getElementById(id)?.classList.add("active");
+    document
+      .getElementById(id)
+      ?.classList
+      .add("active");
 
     $(`.nav-btn[data-view="${id}"]`)
-      ?.classList.add("active");
+      ?.classList
+      .add("active");
   }
 
 
   function openApp(id) {
-    refs.landingScreen.classList.add("hidden");
-    refs.appContent.classList.remove("hidden");
+
+    refs.landingScreen
+      .classList
+      .add("hidden");
+
+    refs.appContent
+      .classList
+      .remove("hidden");
 
     switchView(id);
 
-    window.scrollTo({ top: 0 });
+    window.scrollTo({
+      top: 0
+    });
 
     setTimeout(() => {
+
       if (id === "checkinView") {
         refs.searchInput?.focus();
       }
@@ -140,6 +156,7 @@
       if (id === "pickupView") {
         refs.pickupCodeInput?.focus();
       }
+
     }, 120);
   }
 
@@ -149,38 +166,59 @@
      ============================================================ */
 
   function clearNextFamilyTimer() {
+
     if (nextFamilyTimer) {
-      clearInterval(nextFamilyTimer);
+
+      clearInterval(
+        nextFamilyTimer
+      );
+
       nextFamilyTimer = null;
     }
   }
 
 
   function resetCheckinState() {
+
     state.selected.clear();
+
     state.activeLetter = "";
 
     if (refs.searchInput) {
       refs.searchInput.value = "";
     }
 
-    hideNotice(refs.checkinNotice);
+    hideNotice(
+      refs.checkinNotice
+    );
 
     renderSelected();
+
     filterRoster();
   }
 
 
   function prepareNextFamily() {
+
     clearNextFamilyTimer();
+
     resetCheckinState();
 
-    refs.appContent.classList.remove("hidden");
-    refs.landingScreen.classList.add("hidden");
+    refs.appContent
+      .classList
+      .remove("hidden");
 
-    switchView("checkinView");
+    refs.landingScreen
+      .classList
+      .add("hidden");
 
-    window.scrollTo({ top: 0 });
+    switchView(
+      "checkinView"
+    );
+
+    window.scrollTo({
+      top: 0
+    });
 
     setTimeout(() => {
       refs.searchInput?.focus();
@@ -189,57 +227,118 @@
 
 
   function startNextFamilyCountdown() {
+
     clearNextFamilyTimer();
 
     let seconds = 8;
 
+
     const paint = () => {
-      if (!refs.nextFamilyCountdown) return;
+
+      if (!refs.nextFamilyCountdown) {
+        return;
+      }
 
       refs.nextFamilyCountdown.textContent =
         `Ready for the next family in ${seconds} second${seconds === 1 ? "" : "s"}…`;
     };
 
+
     paint();
 
-    nextFamilyTimer = setInterval(() => {
-      seconds -= 1;
 
-      if (seconds <= 0) {
-        clearNextFamilyTimer();
-        prepareNextFamily();
-        return;
-      }
+    nextFamilyTimer =
+      setInterval(() => {
 
-      paint();
-    }, 1000);
+        seconds -= 1;
+
+
+        if (seconds <= 0) {
+
+          clearNextFamilyTimer();
+
+          prepareNextFamily();
+
+          return;
+        }
+
+
+        paint();
+
+      }, 1000);
   }
 
 
   function returnHome() {
+
     clearNextFamilyTimer();
 
-    refs.appContent.classList.add("hidden");
-    refs.landingScreen.classList.remove("hidden");
+
+    /*
+     * Remove ?view=pickup when the
+     * user intentionally returns Home.
+     */
+
+    const homeUrl =
+      new URL(
+        window.location.href
+      );
+
+    homeUrl
+      .searchParams
+      .delete("view");
+
+    window.history.replaceState(
+      {},
+      "",
+      homeUrl.pathname +
+        homeUrl.search +
+        homeUrl.hash
+    );
+
+
+    refs.appContent
+      .classList
+      .add("hidden");
+
+    refs.landingScreen
+      .classList
+      .remove("hidden");
+
 
     [
       refs.checkinNotice,
       refs.guestNotice,
       refs.pickupNotice
-    ].forEach(hideNotice);
+    ].forEach(
+      hideNotice
+    );
+
 
     if (refs.pickupResult) {
-      refs.pickupResult.classList.add("hidden");
-      refs.pickupResult.innerHTML = "";
+
+      refs.pickupResult
+        .classList
+        .add("hidden");
+
+      refs.pickupResult.innerHTML =
+        "";
     }
 
+
     if (refs.pickupCodeInput) {
-      refs.pickupCodeInput.value = "";
+
+      refs.pickupCodeInput.value =
+        "";
     }
+
 
     resetCheckinState();
 
-    window.scrollTo({ top: 0 });
+
+    window.scrollTo({
+      top: 0
+    });
   }
 
 
@@ -248,34 +347,48 @@
      ============================================================ */
 
   async function checkBackend() {
+
     try {
-      const result = await KidsAPI.health();
+
+      const result =
+        await KidsAPI.health();
+
 
       refs.backendDot.className =
         "status-dot online";
 
+
       refs.backendText.textContent =
-        result.message || "Backend online";
+        result.message ||
+        "Backend online";
+
 
       refs.landingBackendDot.className =
         "status-dot online";
+
 
       refs.landingBackendText.textContent =
         "Check-in service ready";
 
+
     } catch (_) {
+
 
       refs.backendDot.className =
         "status-dot offline";
 
+
       refs.backendText.textContent =
         "Backend unavailable";
+
 
       refs.landingBackendDot.className =
         "status-dot offline";
 
+
       refs.landingBackendText.textContent =
         "Check-in service unavailable";
+
     }
   }
 
@@ -285,13 +398,20 @@
      ============================================================ */
 
   function personName(person) {
-    if (!person) return "";
+
+    if (!person) {
+      return "";
+    }
+
 
     return (
       person.name ||
       [
-        person.firstName || person.first_name,
-        person.lastName || person.last_name
+        person.firstName ||
+          person.first_name,
+
+        person.lastName ||
+          person.last_name
       ]
         .filter(Boolean)
         .join(" ")
@@ -300,11 +420,19 @@
 
 
   function personLastName(person) {
+
     return String(
+
       person?.lastName ||
+
       person?.last_name ||
-      personName(person).split(" ").slice(-1)[0] ||
+
+      personName(person)
+        .split(" ")
+        .slice(-1)[0] ||
+
       ""
+
     ).trim();
   }
 
@@ -314,144 +442,261 @@
      ============================================================ */
 
   function buildHouseholdIndex() {
-    const households = new Map();
 
-    const eligibleChildren = new Map(
-      state.people.map((person) => [
-        String(person.id),
-        person
-      ])
-    );
+    const households =
+      new Map();
 
 
-    state.people.forEach((person) => {
+    const eligibleChildren =
+      new Map(
 
-      const personHouseholds =
-        Array.isArray(person.households)
-          ? person.households
-          : [];
+        state.people.map(
+          (person) => [
+            String(person.id),
+            person
+          ]
+        )
 
-
-      /*
-       * Person does not have household information.
-       * Build a fallback household.
-       */
-
-      if (!personHouseholds.length) {
-
-        const fallbackId =
-          `person-${String(person.id)}`;
-
-        if (!households.has(fallbackId)) {
-
-          households.set(fallbackId, {
-            id: fallbackId,
-            name:
-              `${personLastName(person) || "Unknown"} Household`,
-            adults: [],
-            children: [person]
-          });
-
-        }
-
-        return;
-      }
+      );
 
 
-      personHouseholds.forEach((household) => {
-
-        const id = String(
-          household.id ||
-          `household-${personLastName(person)}`
-        );
+    state.people.forEach(
+      (person) => {
 
 
-        if (!households.has(id)) {
+        const personHouseholds =
+          Array.isArray(
+            person.households
+          )
 
-          households.set(id, {
-            id,
-            name:
-              household.name ||
-              `${personLastName(person)} Household`,
-            adults: [],
-            children: []
-          });
+            ? person.households
 
-        }
-
-
-        const family =
-          households.get(id);
-
-
-        const members =
-          Array.isArray(household.members)
-            ? household.members
             : [];
 
 
-        members.forEach((member) => {
+        /*
+         * Person does not have
+         * household information.
+         */
 
-          const memberId =
-            String(member.id || "");
+        if (
+          !personHouseholds.length
+        ) {
 
 
-          if (member.child) {
+          const fallbackId =
+            `person-${String(
+              person.id
+            )}`;
 
-            const eligibleChild =
-              eligibleChildren.get(memberId);
+
+          if (
+            !households.has(
+              fallbackId
+            )
+          ) {
+
+
+            households.set(
+              fallbackId,
+              {
+
+                id:
+                  fallbackId,
+
+                name:
+                  `${
+                    personLastName(
+                      person
+                    ) ||
+                    "Unknown"
+                  } Household`,
+
+                adults:
+                  [],
+
+                children:
+                  [person]
+
+              }
+            );
+
+          }
+
+
+          return;
+        }
+
+
+        personHouseholds.forEach(
+          (household) => {
+
+
+            const id =
+              String(
+
+                household.id ||
+
+                `household-${
+                  personLastName(
+                    person
+                  )
+                }`
+
+              );
 
 
             if (
-              eligibleChild &&
-              !family.children.some(
-                (child) =>
-                  String(child.id) === memberId
-              )
+              !households.has(id)
             ) {
 
-              family.children.push(
-                eligibleChild
+
+              households.set(
+                id,
+                {
+
+                  id,
+
+                  name:
+                    household.name ||
+
+                    `${
+                      personLastName(
+                        person
+                      )
+                    } Household`,
+
+                  adults:
+                    [],
+
+                  children:
+                    []
+
+                }
               );
 
             }
 
-          } else if (
-            memberId &&
-            !family.adults.some(
-              (adult) =>
-                String(adult.id) === memberId
-            )
-          ) {
 
-            family.adults.push({
-              id: memberId,
-              name: personName(member)
-            });
+            const family =
+              households.get(id);
+
+
+            const members =
+              Array.isArray(
+                household.members
+              )
+
+                ? household.members
+
+                : [];
+
+
+            members.forEach(
+              (member) => {
+
+
+                const memberId =
+                  String(
+                    member.id ||
+                    ""
+                  );
+
+
+                if (
+                  member.child
+                ) {
+
+
+                  const eligibleChild =
+                    eligibleChildren.get(
+                      memberId
+                    );
+
+
+                  if (
+
+                    eligibleChild &&
+
+                    !family.children.some(
+                      (child) =>
+                        String(
+                          child.id
+                        ) ===
+                        memberId
+                    )
+
+                  ) {
+
+
+                    family.children.push(
+                      eligibleChild
+                    );
+
+                  }
+
+
+                } else if (
+
+                  memberId &&
+
+                  !family.adults.some(
+                    (adult) =>
+                      String(
+                        adult.id
+                      ) ===
+                      memberId
+                  )
+
+                ) {
+
+
+                  family.adults.push({
+                    id:
+                      memberId,
+
+                    name:
+                      personName(
+                        member
+                      )
+                  });
+
+                }
+
+              }
+            );
+
+
+            const currentId =
+              String(
+                person.id
+              );
+
+
+            if (
+
+              !family.children.some(
+                (child) =>
+                  String(
+                    child.id
+                  ) ===
+                  currentId
+              )
+
+            ) {
+
+
+              family.children.push(
+                person
+              );
+
+            }
 
           }
+        );
 
-        });
-
-
-        const currentId =
-          String(person.id);
-
-
-        if (
-          !family.children.some(
-            (child) =>
-              String(child.id) === currentId
-          )
-        ) {
-
-          family.children.push(person);
-
-        }
-
-      });
-
-    });
+      }
+    );
 
 
     state.households =
@@ -459,40 +704,67 @@
 
         .filter(
           (household) =>
-            household.children.length
+            household
+              .children
+              .length
         )
 
-        .map((household) => ({
-          ...household,
+        .map(
+          (household) => ({
 
-          adults:
-            household.adults
-              .filter((adult) => adult.name)
-              .sort((a, b) =>
-                a.name.localeCompare(
-                  b.name,
-                  undefined,
-                  { sensitivity: "base" }
+            ...household,
+
+
+            adults:
+              household.adults
+
+                .filter(
+                  (adult) =>
+                    adult.name
                 )
-              ),
 
-          children:
-            household.children
-              .sort((a, b) =>
-                personName(a).localeCompare(
-                  personName(b),
-                  undefined,
-                  { sensitivity: "base" }
+                .sort(
+                  (a, b) =>
+                    a.name.localeCompare(
+                      b.name,
+                      undefined,
+                      {
+                        sensitivity:
+                          "base"
+                      }
+                    )
+                ),
+
+
+            children:
+              household.children
+
+                .sort(
+                  (a, b) =>
+                    personName(a)
+                      .localeCompare(
+                        personName(b),
+                        undefined,
+                        {
+                          sensitivity:
+                            "base"
+                        }
+                      )
                 )
-              )
-        }))
 
-        .sort((a, b) =>
-          a.name.localeCompare(
-            b.name,
-            undefined,
-            { sensitivity: "base" }
-          )
+          })
+        )
+
+        .sort(
+          (a, b) =>
+            a.name.localeCompare(
+              b.name,
+              undefined,
+              {
+                sensitivity:
+                  "base"
+              }
+            )
         );
   }
 
@@ -501,7 +773,10 @@
      LOAD ROSTER
      ============================================================ */
 
-  async function loadRoster(force = false) {
+  async function loadRoster(
+    force = false
+  ) {
+
 
     refs.resultsList.innerHTML =
       '<div class="empty">Loading families…</div>';
@@ -510,37 +785,57 @@
     setBusy(
       refs.refreshRosterBtn,
       true,
-      force ? "Refreshing…" : "Loading…"
+      force
+        ? "Refreshing…"
+        : "Loading…"
     );
 
 
     try {
 
+
       const result =
-        await KidsAPI.getPeople(force);
+        await KidsAPI
+          .getPeople(force);
 
 
       state.people =
-        Array.isArray(result.rows)
+        Array.isArray(
+          result.rows
+        )
+
           ? result.rows
-          : Array.isArray(result.roster)
+
+          : Array.isArray(
+              result.roster
+            )
+
             ? result.roster
+
             : [];
 
 
       buildHouseholdIndex();
+
       filterRoster();
+
 
     } catch (error) {
 
-      refs.resultsList.innerHTML = `
-        <div class="empty">
-          Unable to load the roster.<br>
-          ${escapeHtml(error.message)}
-        </div>
-      `;
+
+      refs.resultsList.innerHTML =
+        `
+          <div class="empty">
+            Unable to load the roster.<br>
+            ${escapeHtml(
+              error.message
+            )}
+          </div>
+        `;
+
 
     } finally {
+
 
       setBusy(
         refs.refreshRosterBtn,
@@ -557,26 +852,43 @@
 
   function renderAlphabet() {
 
+
     const letters =
-      "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+      "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        .split("");
 
 
     return `
       <div class="alphabet-filter">
 
-        ${letters.map((letter) => `
-          <button
-            type="button"
-            class="letter-filter ${
-              state.activeLetter === letter
-                ? "active"
-                : ""
-            }"
-            data-letter="${letter}"
-          >
-            ${letter}
-          </button>
-        `).join("")}
+        ${
+          letters.map(
+            (letter) => `
+
+              <button
+
+                type="button"
+
+                class="letter-filter ${
+                  state.activeLetter ===
+                  letter
+
+                    ? "active"
+
+                    : ""
+                }"
+
+                data-letter="${letter}"
+
+              >
+
+                ${letter}
+
+              </button>
+
+            `
+          ).join("")
+        }
 
       </div>
     `;
@@ -585,43 +897,64 @@
 
   function renderSearchPrompt() {
 
-    refs.resultsList.innerHTML = `
-      ${renderAlphabet()}
 
-      <div class="empty household-search-prompt">
-        Select the first letter of the family's last name,
-        or begin typing above.
-      </div>
-    `;
+    refs.resultsList.innerHTML =
+      `
+        ${renderAlphabet()}
+
+        <div
+          class="empty household-search-prompt"
+        >
+          Select the first letter of the family's last name,
+          or begin typing above.
+        </div>
+      `;
   }
 
 
-  function householdSearchText(household) {
+  function householdSearchText(
+    household
+  ) {
+
 
     return [
+
       household.name,
 
+
       ...household.adults.map(
-        (adult) => adult.name
+        (adult) =>
+          adult.name
       ),
 
+
       ...household.children.map(
-        (child) => personName(child)
+        (child) =>
+          personName(child)
       )
 
     ]
+
       .filter(Boolean)
+
       .join(" ")
+
       .toLowerCase();
   }
 
 
-  function isHouseholdLoaded(household) {
+  function isHouseholdLoaded(
+    household
+  ) {
+
 
     return household.children.some(
       (child) =>
+
         state.selected.has(
-          String(child.id)
+          String(
+            child.id
+          )
         )
     );
   }
@@ -631,134 +964,216 @@
      HOUSEHOLD RESULTS
      ============================================================ */
 
-  function renderHouseholds(households) {
+  function renderHouseholds(
+    households
+  ) {
 
-    if (!households.length) {
 
-      refs.resultsList.innerHTML = `
-        ${renderAlphabet()}
-        <div class="empty">
-          No families matched your search.
-        </div>
-      `;
+    if (
+      !households.length
+    ) {
+
+
+      refs.resultsList.innerHTML =
+        `
+          ${renderAlphabet()}
+
+          <div class="empty">
+            No families matched your search.
+          </div>
+        `;
+
 
       return;
     }
 
 
-    refs.resultsList.innerHTML = `
-      ${renderAlphabet()}
+    refs.resultsList.innerHTML =
+      `
+        ${renderAlphabet()}
 
-      <div class="household-results">
+        <div class="household-results">
 
-        ${households.map((household) => {
-
-          const loaded =
-            isHouseholdLoaded(household);
-
-
-          const adultNames =
-            household.adults
-              .map((adult) => adult.name)
-              .filter(Boolean);
+          ${
+            households.map(
+              (household) => {
 
 
-          const childNames =
-            household.children
-              .map((child) => personName(child))
-              .filter(Boolean);
+                const loaded =
+                  isHouseholdLoaded(
+                    household
+                  );
 
 
-          return `
-            <article class="household-card">
+                const adultNames =
+                  household.adults
 
-              <div class="household-card-content">
+                    .map(
+                      (adult) =>
+                        adult.name
+                    )
 
-                <div class="household-name">
-                  ${escapeHtml(household.name)}
-                </div>
-
-
-                ${adultNames.length ? `
-                  <div class="household-section">
-
-                    <span class="household-label">
-                      Parent / Guardian
-                    </span>
-
-                    <span>
-                      ${escapeHtml(
-                        adultNames.join(" • ")
-                      )}
-                    </span>
-
-                  </div>
-                ` : ""}
+                    .filter(Boolean);
 
 
-                <div class="household-section">
+                const childNames =
+                  household.children
 
-                  <span class="household-label">
-                    Children
-                  </span>
+                    .map(
+                      (child) =>
+                        personName(
+                          child
+                        )
+                    )
 
-                  <span>
-                    ${escapeHtml(
-                      childNames.join(" • ")
-                    )}
-                  </span>
-
-                </div>
-
-              </div>
+                    .filter(Boolean);
 
 
-              <button
-                type="button"
-                class="btn ${
-                  loaded
-                    ? "danger"
-                    : "primary"
-                } select-household"
-                data-household-id="${
-                  escapeHtml(household.id)
-                }"
-              >
+                return `
 
-                ${
-                  loaded
-                    ? "Remove Household"
-                    : "Select Household"
-                }
+                  <article
+                    class="household-card"
+                  >
 
-              </button>
 
-            </article>
-          `;
+                    <div
+                      class="household-card-content"
+                    >
 
-        }).join("")}
 
-      </div>
-    `;
+                      <div
+                        class="household-name"
+                      >
+
+                        ${escapeHtml(
+                          household.name
+                        )}
+
+                      </div>
+
+
+                      ${
+                        adultNames.length
+
+                          ? `
+
+                            <div
+                              class="household-section"
+                            >
+
+                              <span
+                                class="household-label"
+                              >
+                                Parent / Guardian
+                              </span>
+
+                              <span>
+
+                                ${escapeHtml(
+                                  adultNames.join(
+                                    " • "
+                                  )
+                                )}
+
+                              </span>
+
+                            </div>
+
+                          `
+
+                          : ""
+                      }
+
+
+                      <div
+                        class="household-section"
+                      >
+
+                        <span
+                          class="household-label"
+                        >
+                          Children
+                        </span>
+
+                        <span>
+
+                          ${escapeHtml(
+                            childNames.join(
+                              " • "
+                            )
+                          )}
+
+                        </span>
+
+                      </div>
+
+
+                    </div>
+
+
+                    <button
+
+                      type="button"
+
+                      class="btn ${
+                        loaded
+                          ? "danger"
+                          : "primary"
+                      } select-household"
+
+                      data-household-id="${
+                        escapeHtml(
+                          household.id
+                        )
+                      }"
+
+                    >
+
+                      ${
+                        loaded
+                          ? "Remove Household"
+                          : "Select Household"
+                      }
+
+                    </button>
+
+
+                  </article>
+
+                `;
+
+              }
+            ).join("")
+          }
+
+        </div>
+      `;
   }
 
 
   function filterRoster() {
 
+
     const query =
       refs.searchInput.value
+
         .trim()
+
         .toLowerCase();
 
 
     if (
+
       !query &&
+
       !state.activeLetter
+
     ) {
 
-      renderSearchPrompt();
-      return;
 
+      renderSearchPrompt();
+
+      return;
     }
 
 
@@ -766,44 +1181,61 @@
       state.households;
 
 
-    if (state.activeLetter) {
+    if (
+      state.activeLetter
+    ) {
+
 
       filtered =
-        filtered.filter((household) => {
-
-          const familyName =
-            household.name
-              .replace(
-                /\s+Household$/i,
-                ""
-              )
-              .trim();
+        filtered.filter(
+          (household) => {
 
 
-          return familyName
-            .toUpperCase()
-            .startsWith(
-              state.activeLetter
-            );
+            const familyName =
+              household.name
 
-        });
+                .replace(
+                  /\s+Household$/i,
+                  ""
+                )
+
+                .trim();
+
+
+            return familyName
+
+              .toUpperCase()
+
+              .startsWith(
+                state.activeLetter
+              );
+
+          }
+        );
 
     }
 
 
     if (query) {
 
+
       filtered =
-        filtered.filter((household) =>
-          householdSearchText(
-            household
-          ).includes(query)
+        filtered.filter(
+          (household) =>
+
+            householdSearchText(
+              household
+            ).includes(
+              query
+            )
         );
 
     }
 
 
-    renderHouseholds(filtered);
+    renderHouseholds(
+      filtered
+    );
   }
 
 
@@ -811,50 +1243,81 @@
      HOUSEHOLD SELECTION
      ============================================================ */
 
-  function toggleHousehold(householdId) {
+  function toggleHousehold(
+    householdId
+  ) {
+
 
     const household =
       state.households.find(
         (item) =>
+
           String(item.id) ===
           String(householdId)
       );
 
 
-    if (!household) return;
+    if (!household) {
+      return;
+    }
 
 
     const loaded =
-      isHouseholdLoaded(household);
+      isHouseholdLoaded(
+        household
+      );
 
 
     if (loaded) {
 
+
       household.children.forEach(
         (child) =>
+
           state.selected.delete(
-            String(child.id)
+            String(
+              child.id
+            )
           )
       );
 
+
     } else {
+
 
       household.children.forEach(
         (child) => {
 
+
           const id =
-            String(child.id);
+            String(
+              child.id
+            );
 
 
-          state.selected.set(id, {
-            ...child,
-            name: personName(child),
-            service:
-              child.service ||
-              "Sunday School",
-            note: "",
-            present: false
-          });
+          state.selected.set(
+            id,
+            {
+
+              ...child,
+
+              name:
+                personName(
+                  child
+                ),
+
+              service:
+                child.service ||
+                "Sunday School",
+
+              note:
+                "",
+
+              present:
+                false
+
+            }
+          );
 
         }
       );
@@ -863,23 +1326,31 @@
 
 
     renderSelected();
+
     filterRoster();
   }
 
 
   function presentChildren() {
 
-    return [...state.selected.values()]
+
+    return [
+      ...state.selected.values()
+    ]
+
       .filter(
-        (person) => person.present
+        (person) =>
+          person.present
       );
   }
 
 
   function updateSubmitState() {
 
+
     refs.submitCheckinBtn.disabled =
-      presentChildren().length === 0;
+      presentChildren()
+        .length === 0;
   }
 
 
@@ -889,17 +1360,25 @@
 
   function renderSelected() {
 
+
     const people =
-      [...state.selected.values()];
+      [
+        ...state.selected.values()
+      ];
 
 
-    if (!people.length) {
+    if (
+      !people.length
+    ) {
+
 
       refs.selectedList.innerHTML =
         '<div class="empty">No family selected.</div>';
 
+
       refs.submitCheckinBtn.disabled =
         true;
+
 
       return;
     }
@@ -908,160 +1387,258 @@
     refs.selectedList.innerHTML =
       people
 
-        .sort((a, b) =>
-          personName(a).localeCompare(
-            personName(b),
-            undefined,
-            { sensitivity: "base" }
-          )
+        .sort(
+          (a, b) =>
+            personName(a)
+              .localeCompare(
+                personName(b),
+                undefined,
+                {
+                  sensitivity:
+                    "base"
+                }
+              )
         )
 
-        .map((person) => {
-
-          const id =
-            escapeHtml(person.id);
-
-          const present =
-            !!person.present;
+        .map(
+          (person) => {
 
 
-          return `
-            <div
-              class="selected-child-card ${
-                present
-                  ? ""
-                  : "absent"
-              }"
-              data-child-card="${id}"
-            >
-
-              <div class="selected-child-header">
-
-                <div class="selected-child-title">
-
-                  <label class="present-check">
-
-                    <input
-                      type="checkbox"
-                      class="child-present-check"
-                      data-person-id="${id}"
-                      ${
-                        present
-                          ? "checked"
-                          : ""
-                      }
-                    >
-
-                    <span>
-                      Present
-                    </span>
-
-                  </label>
+            const id =
+              escapeHtml(
+                person.id
+              );
 
 
-                  <strong>
-                    ${escapeHtml(
-                      personName(person)
-                    )}
-                  </strong>
-
-                </div>
+            const present =
+              !!person.present;
 
 
-                <button
-                  class="btn danger remove-selected"
-                  type="button"
-                  data-person-id="${id}"
-                  aria-label="Remove ${
-                    escapeHtml(
-                      personName(person)
-                    )
-                  }"
-                >
-                  ×
-                </button>
-
-              </div>
-
+            return `
 
               <div
-                class="child-fields ${
+
+                class="selected-child-card ${
                   present
                     ? ""
-                    : "inactive"
+                    : "absent"
                 }"
+
+                data-child-card="${id}"
+
               >
 
-                <div class="field">
 
-                  <label for="service-${id}">
-                    Service / Event
-                  </label>
+                <div
+                  class="selected-child-header"
+                >
 
 
-                  <select
-                    class="child-service-select"
-                    id="service-${id}"
-                    data-person-id="${id}"
+                  <div
+                    class="selected-child-title"
                   >
 
-                    ${
-                      [
-                        "Sunday School",
-                        "Children's Church",
-                        "Nursery",
-                        "Wednesday Kids",
-                        "Other / General"
-                      ]
 
-                        .map((option) => `
-                          <option
-                            value="${
-                              escapeHtml(option)
-                            }"
-                            ${
-                              person.service === option
-                                ? "selected"
-                                : ""
-                            }
-                          >
-                            ${escapeHtml(option)}
-                          </option>
-                        `)
-
-                        .join("")
-                    }
-
-                  </select>
-
-                </div>
+                    <label
+                      class="present-check"
+                    >
 
 
-                <div class="field child-note">
+                      <input
 
-                  <label for="note-${id}">
-                    Allergies / Notes
-                  </label>
+                        type="checkbox"
+
+                        class="child-present-check"
+
+                        data-person-id="${id}"
+
+                        ${
+                          present
+                            ? "checked"
+                            : ""
+                        }
+
+                      >
 
 
-                  <textarea
-                    id="note-${id}"
-                    class="child-note-input"
+                      <span>
+                        Present
+                      </span>
+
+
+                    </label>
+
+
+                    <strong>
+
+                      ${escapeHtml(
+                        personName(
+                          person
+                        )
+                      )}
+
+                    </strong>
+
+
+                  </div>
+
+
+                  <button
+
+                    class="btn danger remove-selected"
+
+                    type="button"
+
                     data-person-id="${id}"
-                    rows="2"
-                    placeholder="Allergy, medical note, room note, or other information"
-                  >${escapeHtml(
-                    person.note || ""
-                  )}</textarea>
+
+                    aria-label="Remove ${
+                      escapeHtml(
+                        personName(
+                          person
+                        )
+                      )
+                    }"
+
+                  >
+                    ×
+                  </button>
+
 
                 </div>
+
+
+                <div
+
+                  class="child-fields ${
+                    present
+                      ? ""
+                      : "inactive"
+                  }"
+
+                >
+
+
+                  <div
+                    class="field"
+                  >
+
+
+                    <label
+                      for="service-${id}"
+                    >
+                      Service / Event
+                    </label>
+
+
+                    <select
+
+                      class="child-service-select"
+
+                      id="service-${id}"
+
+                      data-person-id="${id}"
+
+                    >
+
+
+                      ${
+                        [
+
+                          "Sunday School",
+
+                          "Children's Church",
+
+                          "Nursery",
+
+                          "Wednesday Kids",
+
+                          "Other / General"
+
+                        ]
+
+                          .map(
+                            (option) => `
+
+                              <option
+
+                                value="${
+                                  escapeHtml(
+                                    option
+                                  )
+                                }"
+
+                                ${
+                                  person.service ===
+                                  option
+
+                                    ? "selected"
+
+                                    : ""
+                                }
+
+                              >
+
+                                ${escapeHtml(
+                                  option
+                                )}
+
+                              </option>
+
+                            `
+                          )
+
+                          .join("")
+                      }
+
+
+                    </select>
+
+
+                  </div>
+
+
+                  <div
+                    class="field child-note"
+                  >
+
+
+                    <label
+                      for="note-${id}"
+                    >
+                      Allergies / Notes
+                    </label>
+
+
+                    <textarea
+
+                      id="note-${id}"
+
+                      class="child-note-input"
+
+                      data-person-id="${id}"
+
+                      rows="2"
+
+                      placeholder="Allergy, medical note, room note, or other information"
+
+                    >${escapeHtml(
+                      person.note ||
+                      ""
+                    )}</textarea>
+
+
+                  </div>
+
+
+                </div>
+
 
               </div>
 
-            </div>
-          `;
+            `;
 
-        })
+          }
+        )
 
         .join("");
 
@@ -1070,13 +1647,18 @@
   }
 
 
-  function removeSelectedPerson(id) {
+  function removeSelectedPerson(
+    id
+  ) {
+
 
     state.selected.delete(
       String(id)
     );
 
+
     renderSelected();
+
     filterRoster();
   }
 
@@ -1087,30 +1669,47 @@
 
   async function submitSelectedCheckin() {
 
+
     const people =
-      presentChildren().map(
-        (person) => ({
+      presentChildren()
 
-          id:
-            String(person.id),
-
-          name:
-            personName(person),
-
-          service:
-            person.service ||
-            "Sunday School",
-
-          note:
-            String(
-              person.note || ""
-            ).trim()
-
-        })
-      );
+        .map(
+          (person) => ({
 
 
-    if (!people.length) return;
+            id:
+              String(
+                person.id
+              ),
+
+
+            name:
+              personName(
+                person
+              ),
+
+
+            service:
+              person.service ||
+              "Sunday School",
+
+
+            note:
+              String(
+                person.note ||
+                ""
+              ).trim()
+
+
+          })
+        );
+
+
+    if (
+      !people.length
+    ) {
+      return;
+    }
 
 
     hideNotice(
@@ -1127,6 +1726,7 @@
 
     try {
 
+
       const aggregateNote =
         people
 
@@ -1140,38 +1740,51 @@
               `${person.name}: ${person.note}`
           )
 
-          .join(" | ");
+          .join(
+            " | "
+          );
 
 
       const result =
-        await KidsAPI.submitAttendance({
+        await KidsAPI
+          .submitAttendance({
 
-          people,
-          children: people,
+            people,
 
-          noteText:
-            aggregateNote,
+            children:
+              people,
 
-          note:
-            aggregateNote
+            noteText:
+              aggregateNote,
 
-        });
+            note:
+              aggregateNote
+
+          });
 
 
       refs.successNames.textContent =
         people
+
           .map(
             (person) =>
               person.name
           )
-          .join(", ");
+
+          .join(
+            ", "
+          );
 
 
       refs.successCode.textContent =
-        result.pickupCode || "—";
+        result.pickupCode ||
+        "—";
 
 
-      if (refs.successEmailStatus) {
+      if (
+        refs.successEmailStatus
+      ) {
+
 
         refs.successEmailStatus.textContent =
           result.emailSent
@@ -1189,6 +1802,7 @@
           result.emailSent
             ? ""
             : "#9d2634";
+
       }
 
 
@@ -1199,7 +1813,9 @@
 
       startNextFamilyCountdown();
 
+
     } catch (error) {
+
 
       showNotice(
         refs.checkinNotice,
@@ -1207,7 +1823,9 @@
         "error"
       );
 
+
     } finally {
+
 
       setBusy(
         refs.submitCheckinBtn,
@@ -1216,6 +1834,7 @@
 
 
       updateSubmitState();
+
     }
   }
 
@@ -1224,9 +1843,13 @@
      FIRST-TIME GUEST CHECK-IN
      ============================================================ */
 
-  async function submitGuest(event) {
+  async function submitGuest(
+    event
+  ) {
+
 
     event.preventDefault();
+
 
     hideNotice(
       refs.guestNotice
@@ -1236,56 +1859,69 @@
     const childFirst =
       $("#guestChildFirst")
         ?.value
-        .trim() || "";
+        .trim() ||
+      "";
 
 
     const childLast =
       $("#guestChildLast")
         ?.value
-        .trim() || "";
+        .trim() ||
+      "";
 
 
     const parentName =
       $("#guestParentName")
         ?.value
-        .trim() || "";
+        .trim() ||
+      "";
 
 
     const email =
       $("#guestEmail")
         ?.value
         .trim()
-        .toLowerCase() || "";
+        .toLowerCase() ||
+      "";
 
 
     const grade =
       $("#guestGrade")
         ?.value
-        .trim() || "";
+        .trim() ||
+      "";
 
 
     const room =
       $("#guestRoom")
-        ?.value || "Sunday School";
+        ?.value ||
+      "Sunday School";
 
 
     const notes =
       $("#guestNotes")
         ?.value
-        .trim() || "";
+        .trim() ||
+      "";
 
 
     if (
+
       !childFirst ||
+
       !parentName ||
+
       !email
+
     ) {
+
 
       showNotice(
         refs.guestNotice,
         "Enter the child name, parent or guardian, and email address.",
         "error"
       );
+
 
       return;
     }
@@ -1296,8 +1932,11 @@
 
 
     if (
-      !emailPattern.test(email)
+      !emailPattern.test(
+        email
+      )
     ) {
+
 
       showNotice(
         refs.guestNotice,
@@ -1305,7 +1944,10 @@
         "error"
       );
 
-      $("#guestEmail")?.focus();
+
+      $("#guestEmail")
+        ?.focus();
+
 
       return;
     }
@@ -1316,13 +1958,17 @@
         childFirst,
         childLast
       ]
+
         .filter(Boolean)
+
         .join(" ");
 
 
     const noteText =
       [
+
         `Guest parent/guardian: ${parentName}`,
+
         `Email: ${email}`,
 
         grade
@@ -1332,33 +1978,39 @@
         notes
           ? `Notes: ${notes}`
           : ""
+
       ]
 
         .filter(Boolean)
+
         .join("\n");
 
 
-    const people = [
-      {
-        id:
-          `guest-${Date.now()}`,
+    const people =
+      [
+        {
 
-        name:
-          fullName,
+          id:
+            `guest-${Date.now()}`,
 
-        service:
-          room,
+          name:
+            fullName,
 
-        note:
-          notes
-      }
-    ];
+          service:
+            room,
+
+          note:
+            notes
+
+        }
+      ];
 
 
     const button =
-      refs.guestForm.querySelector(
-        'button[type="submit"]'
-      );
+      refs.guestForm
+        .querySelector(
+          'button[type="submit"]'
+        );
 
 
     setBusy(
@@ -1370,30 +2022,37 @@
 
     try {
 
+
       const result =
-        await KidsAPI.submitAttendance({
+        await KidsAPI
+          .submitAttendance({
 
-          people,
-          children: people,
+            people,
 
-          noteText,
-          note: noteText,
+            children:
+              people,
 
-          guest: true,
+            noteText,
 
-          parentName:
-            parentName,
+            note:
+              noteText,
 
-          parentEmail:
-            email,
+            guest:
+              true,
 
-          email:
-            email,
+            parentName:
+              parentName,
 
-          guestEmail:
-            email
+            parentEmail:
+              email,
 
-        });
+            email:
+              email,
+
+            guestEmail:
+              email
+
+          });
 
 
       refs.successNames.textContent =
@@ -1401,25 +2060,34 @@
 
 
       refs.successCode.textContent =
-        result.pickupCode || "—";
+        result.pickupCode ||
+        "—";
 
 
       if (
         refs.successEmailStatus
       ) {
 
-        if (result.emailSent) {
+
+        if (
+          result.emailSent
+        ) {
+
 
           refs.successEmailStatus.textContent =
             `Pickup code emailed to ${email}.`;
 
+
           refs.successEmailStatus.style.color =
             "";
 
+
         } else {
+
 
           refs.successEmailStatus.textContent =
             `Pickup email was not sent to ${email}. Please give the parent the code shown above.`;
+
 
           refs.successEmailStatus.style.color =
             "#9d2634";
@@ -1438,7 +2106,9 @@
 
       startNextFamilyCountdown();
 
+
     } catch (error) {
+
 
       showNotice(
         refs.guestNotice,
@@ -1446,7 +2116,9 @@
         "error"
       );
 
+
     } finally {
+
 
       setBusy(
         button,
@@ -1463,9 +2135,12 @@
 
   async function verifyPickup() {
 
+
     const code =
       refs.pickupCodeInput.value
+
         .trim()
+
         .toUpperCase();
 
 
@@ -1487,11 +2162,13 @@
       code.length !== 4
     ) {
 
+
       showNotice(
         refs.pickupNotice,
         "Enter the complete four-character pickup code.",
         "error"
       );
+
 
       return;
     }
@@ -1506,47 +2183,77 @@
 
     try {
 
+
       const result =
         await KidsAPI
-          .verifyPickupCode(code);
+          .verifyPickupCode(
+            code
+          );
 
 
       const record =
-        result.record || {};
+        result.record ||
+        {};
 
 
       const children =
-        Array.isArray(record.children)
+        Array.isArray(
+          record.children
+        )
+
           ? record.children
+
           : [];
 
 
-      refs.pickupResult.innerHTML = `
+      refs.pickupResult.innerHTML =
+        `
 
-        <h3>
-          Pickup Verified
-        </h3>
+          <h3>
+            Pickup Verified
+          </h3>
 
-        <p>
-          <strong>Children:</strong>
-          ${
-            escapeHtml(
-              children.join(", ") ||
-              "Pickup completed"
-            )
-          }
-        </p>
 
-        <p>
-          <strong>Code:</strong>
-          ${
-            escapeHtml(
-              record.code ||
-              code
-            )
-          }
-        </p>
-      `;
+          <p>
+
+            <strong>
+              Children:
+            </strong>
+
+            ${
+              escapeHtml(
+
+                children.join(
+                  ", "
+                ) ||
+
+                "Pickup completed"
+
+              )
+            }
+
+          </p>
+
+
+          <p>
+
+            <strong>
+              Code:
+            </strong>
+
+            ${
+              escapeHtml(
+
+                record.code ||
+
+                code
+
+              )
+            }
+
+          </p>
+
+        `;
 
 
       refs.pickupResult
@@ -1556,8 +2263,10 @@
 
       showNotice(
         refs.pickupNotice,
+
         result.message ||
           "Pickup code verified.",
+
         "success"
       );
 
@@ -1565,7 +2274,9 @@
       refs.pickupCodeInput.value =
         "";
 
+
     } catch (error) {
+
 
       showNotice(
         refs.pickupNotice,
@@ -1573,7 +2284,9 @@
         "error"
       );
 
+
     } finally {
+
 
       setBusy(
         refs.verifyPickupBtn,
@@ -1589,6 +2302,7 @@
      ============================================================ */
 
   function registerEvents() {
+
 
     refs.landingCheckinBtn.onclick =
       () =>
@@ -1615,27 +2329,43 @@
       returnHome;
 
 
-    $$(".nav-btn").forEach(
-      (button) => {
+    /*
+     * Navigation tabs
+     */
 
-        button.onclick = () => {
+    $$(".nav-btn")
+      .forEach(
+        (button) => {
 
-          clearNextFamilyTimer();
 
-          switchView(
-            button.dataset.view
-          );
+          button.onclick =
+            () => {
 
-        };
 
-      }
-    );
+              clearNextFamilyTimer();
 
+
+              switchView(
+                button.dataset.view
+              );
+
+            };
+
+        }
+      );
+
+
+    /*
+     * Family search
+     */
 
     refs.searchInput.oninput =
       () => {
 
-        state.activeLetter = "";
+
+        state.activeLetter =
+          "";
+
 
         filterRoster();
 
@@ -1645,26 +2375,41 @@
     refs.clearSearchBtn.onclick =
       () => {
 
+
         refs.searchInput.value =
           "";
+
 
         state.activeLetter =
           "";
 
+
         filterRoster();
+
 
         refs.searchInput.focus();
 
       };
 
 
+    /*
+     * Roster refresh
+     */
+
     refs.refreshRosterBtn.onclick =
       () =>
-        loadRoster(true);
+        loadRoster(
+          true
+        );
 
+
+    /*
+     * Household results
+     */
 
     refs.resultsList.onclick =
       (event) => {
+
 
         const letterButton =
           event.target.closest(
@@ -1672,15 +2417,23 @@
           );
 
 
-        if (letterButton) {
+        if (
+          letterButton
+        ) {
+
 
           const letter =
-            letterButton.dataset.letter;
+            letterButton
+              .dataset
+              .letter;
 
 
           state.activeLetter =
-            state.activeLetter === letter
+            state.activeLetter ===
+            letter
+
               ? ""
+
               : letter;
 
 
@@ -1689,6 +2442,7 @@
 
 
           filterRoster();
+
 
           return;
         }
@@ -1700,7 +2454,10 @@
           );
 
 
-        if (householdButton) {
+        if (
+          householdButton
+        ) {
+
 
           toggleHousehold(
             householdButton
@@ -1713,8 +2470,13 @@
       };
 
 
+    /*
+     * Remove selected child
+     */
+
     refs.selectedList.onclick =
       (event) => {
+
 
         const button =
           event.target.closest(
@@ -1722,7 +2484,10 @@
           );
 
 
-        if (button) {
+        if (
+          button
+        ) {
+
 
           removeSelectedPerson(
             button.dataset.personId
@@ -1733,8 +2498,13 @@
       };
 
 
+    /*
+     * Selected child changes
+     */
+
     refs.selectedList.onchange =
       (event) => {
+
 
         const presentCheck =
           event.target.closest(
@@ -1742,7 +2512,10 @@
           );
 
 
-        if (presentCheck) {
+        if (
+          presentCheck
+        ) {
+
 
           const id =
             String(
@@ -1753,17 +2526,24 @@
 
 
           const person =
-            state.selected.get(id);
+            state.selected.get(
+              id
+            );
 
 
-          if (person) {
+          if (
+            person
+          ) {
+
 
             person.present =
               presentCheck.checked;
 
+
             renderSelected();
 
           }
+
 
           return;
         }
@@ -1775,17 +2555,27 @@
           );
 
 
-        if (select) {
+        if (
+          select
+        ) {
+
 
           const person =
             state.selected.get(
+
               String(
-                select.dataset.personId
+                select
+                  .dataset
+                  .personId
               )
+
             );
 
 
-          if (person) {
+          if (
+            person
+          ) {
+
 
             person.service =
               select.value;
@@ -1795,8 +2585,13 @@
       };
 
 
+    /*
+     * Child notes
+     */
+
     refs.selectedList.oninput =
       (event) => {
+
 
         const note =
           event.target.closest(
@@ -1804,18 +2599,29 @@
           );
 
 
-        if (!note) return;
+        if (
+          !note
+        ) {
+          return;
+        }
 
 
         const person =
           state.selected.get(
+
             String(
-              note.dataset.personId
+              note
+                .dataset
+                .personId
             )
+
           );
 
 
-        if (person) {
+        if (
+          person
+        ) {
+
 
           person.note =
             note.value;
@@ -1825,13 +2631,25 @@
       };
 
 
+    /*
+     * Submit regular check-in
+     */
+
     refs.submitCheckinBtn.onclick =
       submitSelectedCheckin;
 
 
+    /*
+     * Submit guest check-in
+     */
+
     refs.guestForm.onsubmit =
       submitGuest;
 
+
+    /*
+     * Pickup
+     */
 
     refs.verifyPickupBtn.onclick =
       verifyPickup;
@@ -1839,6 +2657,7 @@
 
     refs.pickupCodeInput.oninput =
       () => {
+
 
         refs.pickupCodeInput.value =
           refs.pickupCodeInput.value
@@ -1861,9 +2680,12 @@
     refs.pickupCodeInput.onkeydown =
       (event) => {
 
+
         if (
-          event.key === "Enter"
+          event.key ===
+          "Enter"
         ) {
+
 
           verifyPickup();
 
@@ -1871,6 +2693,10 @@
 
       };
 
+
+    /*
+     * Next family
+     */
 
     refs.newCheckinBtn.onclick =
       prepareNextFamily;
@@ -1883,60 +2709,99 @@
 
   async function init() {
 
+
     bindRefs();
 
+
     registerEvents();
+
 
     renderSelected();
 
 
-    await Promise.all([
-      checkBackend(),
-      loadRoster(false)
-    ]);
+    /*
+     * ==========================================================
+     * DIRECT PICKUP LINK
+     * ==========================================================
+     *
+     * This happens BEFORE the roster is downloaded.
+     *
+     * Therefore scanning:
+     *
+     * https://checkin.versaillesumc.org/?view=pickup
+     *
+     * immediately displays the Pickup screen.
+     *
+     * The backend and roster can continue loading afterward.
+     * ==========================================================
+     */
 
-
-    /* ==========================================================
-       DIRECT LINK ROUTING
-
-       Allows the universal QR code to open:
-       https://checkin.versaillesumc.org/?view=pickup
-       ========================================================== */
 
     const params =
       new URLSearchParams(
         window.location.search
       );
 
+
     const requestedView =
       String(
-        params.get("view") || ""
+        params.get("view") ||
+        ""
       )
+
         .trim()
+
         .toLowerCase();
 
 
-    if (requestedView === "pickup") {
+    if (
+      requestedView ===
+      "pickup"
+    ) {
 
-      openApp("pickupView");
+
+      openApp(
+        "pickupView"
+      );
 
     }
+
+
+    /*
+     * Backend and roster initialization
+     */
+
+
+    await Promise.all([
+
+      checkBackend(),
+
+      loadRoster(false)
+
+    ]);
 
 
     /*
      * Service Worker
      */
 
+
     if (
-      "serviceWorker" in navigator
+      "serviceWorker" in
+      navigator
     ) {
 
-      navigator.serviceWorker
+
+      navigator
+        .serviceWorker
 
         .register(
           "./service-worker.js",
           {
-            updateViaCache: "none"
+
+            updateViaCache:
+              "none"
+
           }
         )
 
