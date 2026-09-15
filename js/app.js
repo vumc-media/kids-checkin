@@ -1014,22 +1014,22 @@
                         "Other / General"
                       ]
 
-                      .map((option) => `
-                        <option
-                          value="${
-                            escapeHtml(option)
-                          }"
-                          ${
-                            person.service === option
-                              ? "selected"
-                              : ""
-                          }
-                        >
-                          ${escapeHtml(option)}
-                        </option>
-                      `)
+                        .map((option) => `
+                          <option
+                            value="${
+                              escapeHtml(option)
+                            }"
+                            ${
+                              person.service === option
+                                ? "selected"
+                                : ""
+                            }
+                          >
+                            ${escapeHtml(option)}
+                          </option>
+                        `)
 
-                      .join("")
+                        .join("")
                     }
 
                   </select>
@@ -1275,10 +1275,6 @@
         .trim() || "";
 
 
-    /*
-     * Required guest information
-     */
-
     if (
       !childFirst ||
       !parentName ||
@@ -1294,10 +1290,6 @@
       return;
     }
 
-
-    /*
-     * Basic email validation
-     */
 
     const emailPattern =
       /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -1327,11 +1319,6 @@
         .filter(Boolean)
         .join(" ");
 
-
-    /*
-     * Guest information stored with
-     * the check-in record.
-     */
 
     const noteText =
       [
@@ -1382,14 +1369,6 @@
 
 
     try {
-
-      /*
-       * Email is passed explicitly.
-       *
-       * This allows GAS to use the
-       * entered guest email address
-       * for the pickup-code message.
-       */
 
       const result =
         await KidsAPI.submitAttendance({
@@ -1636,10 +1615,6 @@
       returnHome;
 
 
-    /*
-     * Navigation tabs
-     */
-
     $$(".nav-btn").forEach(
       (button) => {
 
@@ -1656,10 +1631,6 @@
       }
     );
 
-
-    /*
-     * Family search
-     */
 
     refs.searchInput.oninput =
       () => {
@@ -1687,18 +1658,10 @@
       };
 
 
-    /*
-     * Roster refresh
-     */
-
     refs.refreshRosterBtn.onclick =
       () =>
         loadRoster(true);
 
-
-    /*
-     * Household results
-     */
 
     refs.resultsList.onclick =
       (event) => {
@@ -1750,10 +1713,6 @@
       };
 
 
-    /*
-     * Remove selected child
-     */
-
     refs.selectedList.onclick =
       (event) => {
 
@@ -1773,10 +1732,6 @@
 
       };
 
-
-    /*
-     * Selected child changes
-     */
 
     refs.selectedList.onchange =
       (event) => {
@@ -1840,10 +1795,6 @@
       };
 
 
-    /*
-     * Child notes
-     */
-
     refs.selectedList.oninput =
       (event) => {
 
@@ -1874,25 +1825,13 @@
       };
 
 
-    /*
-     * Submit regular check-in
-     */
-
     refs.submitCheckinBtn.onclick =
       submitSelectedCheckin;
 
 
-    /*
-     * Submit guest check-in
-     */
-
     refs.guestForm.onsubmit =
       submitGuest;
 
-
-    /*
-     * Pickup
-     */
 
     refs.verifyPickupBtn.onclick =
       verifyPickup;
@@ -1933,10 +1872,6 @@
       };
 
 
-    /*
-     * Next family
-     */
-
     refs.newCheckinBtn.onclick =
       prepareNextFamily;
   }
@@ -1959,6 +1894,33 @@
       checkBackend(),
       loadRoster(false)
     ]);
+
+
+    /* ==========================================================
+       DIRECT LINK ROUTING
+
+       Allows the universal QR code to open:
+       https://checkin.versaillesumc.org/?view=pickup
+       ========================================================== */
+
+    const params =
+      new URLSearchParams(
+        window.location.search
+      );
+
+    const requestedView =
+      String(
+        params.get("view") || ""
+      )
+        .trim()
+        .toLowerCase();
+
+
+    if (requestedView === "pickup") {
+
+      openApp("pickupView");
+
+    }
 
 
     /*
