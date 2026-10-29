@@ -279,6 +279,7 @@
      ============================================================ */
 
   function revealReprint() {
+    if (!state.lastJob) return;
 
     ensureUi();
 
@@ -702,6 +703,17 @@
 
   window.KidsPrinter =
     Object.freeze({
+
+      prepareReprint: function (children, options = {}) {
+        state.lastJob = { children: normalizeChildren(children), mode: options.mode || "household" };
+        if (state.lastJob.children.length) revealReprint();
+      },
+
+      reset: function () {
+        state.lastJob = null;
+        const button = document.getElementById("dymoReprintBtn");
+        if (button) button.hidden = true;
+      },
 
       printLabels:
         printLabels,

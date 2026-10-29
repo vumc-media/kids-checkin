@@ -181,6 +181,9 @@
   function resetCheckinState() {
 
     state.selected.clear();
+    state.requestSignature = null;
+    state.requestId = null;
+    window.KidsPrinter?.reset();
 
     state.activeLetter = "";
 
@@ -419,375 +422,42 @@
      ============================================================ */
 
   function buildHouseholdIndex() {
-
-    const households =
-      new Map();
-
-    const eligibleChildren =
-      new Map(
-
-        state.people.map(
-          (person) => [
-            String(person.id),
-            person
-          ]
-        )
-
-      );
-
-    state.people.forEach(
-      (person) => {
-
-        const personHouseholds =
-          Array.isArray(
-            person.households
-          )
-
-            ? person.households
-
-            : [];
-
-        /*
-         * Person does not have
-         * household information.
-         */
-
-        if (
-          !personHouseholds.length
-        ) {
-
-          const fallbackId =
-            `person-${String(
-              person.id
-            )}`;
-
-          if (
-            !households.has(
-              fallbackId
-            )
-          ) {
-
-            households.set(
-              fallbackId,
-              {
-
-                id:
-                  fallbackId,
-
-                name:
-                  `${
-                    personLastName(
-                      person
-                    ) ||
-                    "Unknown"
-                  } Household`,
-
-                adults:
-                  [],
-
-                children:
-                  [person]
-
-              }
-            );
-
-          }
-
-          return;
-        }
-
-        personHouseholds.forEach(
-          (household) => {
-
-            const id =
-              String(
-
-                household.id ||
-
-                `household-${
-                  personLastName(
-                    person
-                  )
-                }`
-
-              );
-
-            if (
-              !households.has(id)
-            ) {
-
-              households.set(
-                id,
-                {
-
-                  id,
-
-                  name:
-                    household.name ||
-
-                    `${
-                      personLastName(
-                        person
-                      )
-                    } Household`,
-
-                  adults:
-                    [],
-
-                  children:
-                    []
-
-                }
-              );
-
-            }
-
-            const family =
-              households.get(id);
-
-            const members =
-              Array.isArray(
-                household.members
-              )
-
-                ? household.members
-
-                : [];
-
-            members.forEach(
-              (member) => {
-
-                const memberId =
-                  String(
-                    member.id ||
-                    ""
-                  );
-
-                if (
-                  member.child
-                ) {
-
-                  const eligibleChild =
-                    eligibleChildren.get(
-                      memberId
-                    );
-
-                  if (
-
-                    eligibleChild &&
-
-                    !family.children.some(
-                      (child) =>
-                        String(
-                          child.id
-                        ) ===
-                        memberId
-                    )
-
-                  ) {
-
-                    family.children.push(
-                      eligibleChild
-                    );
-
-                  }
-
-                } else if (
-
-                  memberId &&
-
-                  !family.adults.some(
-                    (adult) =>
-                      String(
-                        adult.id
-                      ) ===
-                      memberId
-                  )
-
-                ) {
-
-                  family.adults.push({
-                    id:
-                      memberId,
-
-                    name:
-                      personName(
-                        member
-                      )
-                  });
-
-                }
-
-              }
-            );
-
-            const currentId =
-              String(
-                person.id
-              );
-
-            if (
-
-              !family.children.some(
-                (child) =>
-                  String(
-                    child.id
-                  ) ===
-                  currentId
-              )
-
-            ) {
-
-              family.children.push(
-                person
-              );
-
-            }
-
-          }
-        );
-
+    const families = new Map();
+    for (const person of state.people) {
+      const homes = person.households?.length ? person.households : [{ id: `person-${person.id}`, name: personName(person) }];
+      for (const home of homes) {
+        const id = String(home.id);
+        if (!families.has(id)) families.set(id, { id, name: home.name || `${personLastName(person)} Household`, adults: [], children: [] });
+        const family = families.get(id);
+        const members = person.child ? family.children : family.adults;
+        if (!members.some(member => String(member.id) === String(person.id))) members.push(person);
       }
-    );
-
-    state.households =
-      [...households.values()]
-
-        .filter(
-          (household) =>
-            household
-              .children
-              .length
-        )
-
-        .map(
-          (household) => ({
-
-            ...household,
-
-            adults:
-              household.adults
-
-                .filter(
-                  (adult) =>
-                    adult.name
-                )
-
-                .sort(
-                  (a, b) =>
-                    a.name.localeCompare(
-                      b.name,
-                      undefined,
-                      {
-                        sensitivity:
-                          "base"
-                      }
-                    )
-                ),
-
-            children:
-              household.children
-
-                .sort(
-                  (a, b) =>
-                    personName(a)
-                      .localeCompare(
-                        personName(b),
-                        undefined,
-                        {
-                          sensitivity:
-                            "base"
-                        }
-                      )
-                )
-
-          })
-        )
-
-        .sort(
-          (a, b) =>
-            a.name.localeCompare(
-              b.name,
-              undefined,
-              {
-                sensitivity:
-                  "base"
-              }
-            )
-        );
-  }
-
-
-  /* ============================================================
-     LOAD ROSTER
-     ============================================================ */
-
-  async function loadRoster(
-    force = false
-  ) {
-
-    refs.resultsList.innerHTML =
-      '<div class="empty">Loading families…</div>';
-
-    setBusy(
-      refs.refreshRosterBtn,
-      true,
-      force
-        ? "Refreshing…"
-        : "Loading…"
-    );
-
-    try {
-
-      const result =
-        await KidsAPI
-          .getPeople(force);
-
-      state.people =
-        Array.isArray(
-          result.rows
-        )
-
-          ? result.rows
-
-          : Array.isArray(
-              result.roster
-            )
-
-            ? result.roster
-
-            : [];
-
-      buildHouseholdIndex();
-
-      filterRoster();
-
-    } catch (error) {
-
-      refs.resultsList.innerHTML =
-        `
-          <div class="empty">
-            Unable to load the roster.<br>
-            ${escapeHtml(
-              error.message
-            )}
-          </div>
-        `;
-
-    } finally {
-
-      setBusy(
-        refs.refreshRosterBtn,
-        false
-      );
-
     }
+    state.households = [...families.values()].map(family => ({ ...family,
+      adults: family.adults.sort((a,b) => personName(a).localeCompare(personName(b))),
+      children: family.children.sort((a,b) => personName(a).localeCompare(personName(b)))
+    })).sort((a,b) => a.name.localeCompare(b.name));
   }
 
-
-  /* ============================================================
-     ALPHABET FILTER
-     ============================================================ */
+  async function loadRoster(force = false) {
+    refs.resultsList.innerHTML = '<div class="empty">Loading families…</div>';
+    setBusy(refs.refreshRosterBtn, true, force ? "Refreshing…" : "Loading…");
+    try {
+      const result = await KidsAPI.getPeople(force);
+      if (result.rosterSchema !== "family-v1") throw new Error("The family check-in backend needs to be updated. Please ask a staff member.");
+      state.people = result.rows.filter(person => person.status === "active" && typeof person.child === "boolean");
+      // A refresh must not leave an inactive or removed person selected.
+      const activePeople = new Map(state.people.map(p => [String(p.id), p]));
+      for (const [id, selected] of state.selected) {
+        if (!activePeople.has(id)) state.selected.delete(id);
+        else state.selected.set(id, { ...selected, ...activePeople.get(id) });
+      }
+      buildHouseholdIndex(); renderSelected(); filterRoster();
+    } catch (error) {
+      state.people = []; state.households = []; state.selected.clear(); renderSelected();
+      refs.resultsList.innerHTML = `<div class="empty">Unable to load the roster.<br>${escapeHtml(error.message)}</div>`;
+    } finally { setBusy(refs.refreshRosterBtn, false); }
+  }
 
   function renderAlphabet() {
 
@@ -876,197 +546,20 @@
   }
 
 
-  function isHouseholdLoaded(
-    household
-  ) {
-
-    return household.children.some(
-      (child) =>
-
-        state.selected.has(
-          String(
-            child.id
-          )
-        )
-    );
+  function isHouseholdLoaded(household) {
+    return [...household.adults, ...household.children].some(person => state.selected.has(String(person.id)));
   }
 
-
-  /* ============================================================
-     HOUSEHOLD RESULTS
-     ============================================================ */
-
-  function renderHouseholds(
-    households
-  ) {
-
-    if (
-      !households.length
-    ) {
-
-      refs.resultsList.innerHTML =
-        `
-          ${renderAlphabet()}
-
-          <div class="empty">
-            No families matched your search.
-          </div>
-        `;
-
-      return;
-    }
-
-    refs.resultsList.innerHTML =
-      `
-        ${renderAlphabet()}
-
-        <div class="household-results">
-
-          ${
-            households.map(
-              (household) => {
-
-                const loaded =
-                  isHouseholdLoaded(
-                    household
-                  );
-
-                const adultNames =
-                  household.adults
-
-                    .map(
-                      (adult) =>
-                        adult.name
-                    )
-
-                    .filter(Boolean);
-
-                const childNames =
-                  household.children
-
-                    .map(
-                      (child) =>
-                        personName(
-                          child
-                        )
-                    )
-
-                    .filter(Boolean);
-
-                return `
-
-                  <article
-                    class="household-card"
-                  >
-
-                    <div
-                      class="household-card-content"
-                    >
-
-                      <div
-                        class="household-name"
-                      >
-
-                        ${escapeHtml(
-                          household.name
-                        )}
-
-                      </div>
-
-                      ${
-                        adultNames.length
-
-                          ? `
-
-                            <div
-                              class="household-section"
-                            >
-
-                              <span
-                                class="household-label"
-                              >
-                                Parent / Guardian
-                              </span>
-
-                              <span>
-
-                                ${escapeHtml(
-                                  adultNames.join(
-                                    " • "
-                                  )
-                                )}
-
-                              </span>
-
-                            </div>
-
-                          `
-
-                          : ""
-                      }
-
-                      <div
-                        class="household-section"
-                      >
-
-                        <span
-                          class="household-label"
-                        >
-                          Children
-                        </span>
-
-                        <span>
-
-                          ${escapeHtml(
-                            childNames.join(
-                              " • "
-                            )
-                          )}
-
-                        </span>
-
-                      </div>
-
-                    </div>
-
-                    <button
-
-                      type="button"
-
-                      class="btn ${
-                        loaded
-                          ? "danger"
-                          : "primary"
-                      } select-household"
-
-                      data-household-id="${
-                        escapeHtml(
-                          household.id
-                        )
-                      }"
-
-                    >
-
-                      ${
-                        loaded
-                          ? "Remove Household"
-                          : "Select Household"
-                      }
-
-                    </button>
-
-                  </article>
-
-                `;
-
-              }
-            ).join("")
-          }
-
-        </div>
-      `;
+  function renderHouseholds(households) {
+    refs.resultsList.innerHTML = `${renderAlphabet()}<div class="household-results">${households.length ? households.slice(0, window.KIDS_CONFIG.SEARCH_LIMIT || 100).map(home => {
+      const loaded = isHouseholdLoaded(home);
+      const names = members => escapeHtml(members.map(personName).join(" • "));
+      return `<article class="household-card"><div class="household-card-content"><div class="household-name">${escapeHtml(home.name)}</div>
+        ${home.adults.length ? `<div class="household-section"><span class="household-label">Adults</span><span>${names(home.adults)}</span></div>` : ""}
+        ${home.children.length ? `<div class="household-section"><span class="household-label">Children</span><span>${names(home.children)}</span></div>` : ""}
+        </div><button type="button" class="btn ${loaded ? 'secondary' : 'primary'} select-household" data-household-id="${escapeHtml(home.id)}">${loaded ? 'Remove Household' : 'Select Household'}</button></article>`;
+    }).join("") : '<div class="empty">No families matched your search.</div>'}</div>`;
   }
-
 
   function filterRoster() {
 
@@ -1149,83 +642,16 @@
      HOUSEHOLD SELECTION
      ============================================================ */
 
-  function toggleHousehold(
-    householdId
-  ) {
-
-    const household =
-      state.households.find(
-        (item) =>
-
-          String(item.id) ===
-          String(householdId)
-      );
-
-    if (!household) {
-      return;
-    }
-
-    const loaded =
-      isHouseholdLoaded(
-        household
-      );
-
-    if (loaded) {
-
-      household.children.forEach(
-        (child) =>
-
-          state.selected.delete(
-            String(
-              child.id
-            )
-          )
-      );
-
-    } else {
-
-      household.children.forEach(
-        (child) => {
-
-          const id =
-            String(
-              child.id
-            );
-
-          state.selected.set(
-            id,
-            {
-
-              ...child,
-
-              name:
-                personName(
-                  child
-                ),
-
-              service:
-                child.service ||
-                "Sunday School",
-
-              note:
-                "",
-
-              present:
-                false
-
-            }
-          );
-
-        }
-      );
-
-    }
-
-    renderSelected();
-
-    filterRoster();
+  function toggleHousehold(householdId) {
+    const home = state.households.find(item => String(item.id) === String(householdId));
+    if (!home) return;
+    const loaded = isHouseholdLoaded(home);
+    state.selected.clear();
+    if (!loaded) [...home.adults, ...home.children].forEach(person => state.selected.set(String(person.id), {
+      ...person, name: personName(person), service: person.child ? "Sunday School" : "Worship", note: "", present: false
+    }));
+    renderSelected(); filterRoster();
   }
-
 
   function presentChildren() {
 
@@ -1253,260 +679,24 @@
      ============================================================ */
 
   function renderSelected() {
-
-    const people =
-      [
-        ...state.selected.values()
-      ];
-
-    if (
-      !people.length
-    ) {
-
-      refs.selectedList.innerHTML =
-        '<div class="empty">No family selected.</div>';
-
-      refs.submitCheckinBtn.disabled =
-        true;
-
-      return;
-    }
-
-    refs.selectedList.innerHTML =
-      people
-
-        .sort(
-          (a, b) =>
-            personName(a)
-              .localeCompare(
-                personName(b),
-                undefined,
-                {
-                  sensitivity:
-                    "base"
-                }
-              )
-        )
-
-        .map(
-          (person) => {
-
-            const id =
-              escapeHtml(
-                person.id
-              );
-
-            const present =
-              !!person.present;
-
-            return `
-
-              <div
-
-                class="selected-child-card ${
-                  present
-                    ? ""
-                    : "absent"
-                }"
-
-                data-child-card="${id}"
-
-              >
-
-                <div
-                  class="selected-child-header"
-                >
-
-                  <div
-                    class="selected-child-title"
-                  >
-
-                    <label
-                      class="present-check"
-                    >
-
-                      <input
-
-                        type="checkbox"
-
-                        class="child-present-check"
-
-                        data-person-id="${id}"
-
-                        ${
-                          present
-                            ? "checked"
-                            : ""
-                        }
-
-                      >
-
-                      <span>
-                        Present
-                      </span>
-
-                    </label>
-
-                    <strong>
-
-                      ${escapeHtml(
-                        personName(
-                          person
-                        )
-                      )}
-
-                    </strong>
-
-                  </div>
-
-                  <button
-
-                    class="btn danger remove-selected"
-
-                    type="button"
-
-                    data-person-id="${id}"
-
-                    aria-label="Remove ${
-                      escapeHtml(
-                        personName(
-                          person
-                        )
-                      )
-                    }"
-
-                  >
-                    ×
-                  </button>
-
-                </div>
-
-                <div
-
-                  class="child-fields ${
-                    present
-                      ? ""
-                      : "inactive"
-                  }"
-
-                >
-
-                  <div
-                    class="field"
-                  >
-
-                    <label
-                      for="service-${id}"
-                    >
-                      Service / Event
-                    </label>
-
-                    <select
-
-                      class="child-service-select"
-
-                      id="service-${id}"
-
-                      data-person-id="${id}"
-
-                    >
-
-                      ${
-                        [
-
-                          "Sunday School",
-
-                          "Children's Church",
-
-                          "Nursery",
-
-                          "Wednesday Kids",
-
-                          "Other / General"
-
-                        ]
-
-                          .map(
-                            (option) => `
-
-                              <option
-
-                                value="${
-                                  escapeHtml(
-                                    option
-                                  )
-                                }"
-
-                                ${
-                                  person.service ===
-                                  option
-
-                                    ? "selected"
-
-                                    : ""
-                                }
-
-                              >
-
-                                ${escapeHtml(
-                                  option
-                                )}
-
-                              </option>
-
-                            `
-                          )
-
-                          .join("")
-                      }
-
-                    </select>
-
-                  </div>
-
-                  <div
-                    class="field child-note"
-                  >
-
-                    <label
-                      for="note-${id}"
-                    >
-                      Allergies / Notes
-                    </label>
-
-                    <textarea
-
-                      id="note-${id}"
-
-                      class="child-note-input"
-
-                      data-person-id="${id}"
-
-                      rows="2"
-
-                      placeholder="Allergy, medical note, room note, or other information"
-
-                    >${escapeHtml(
-                      person.note ||
-                      ""
-                    )}</textarea>
-
-                  </div>
-
-                </div>
-
-              </div>
-
-            `;
-
-          }
-        )
-
-        .join("");
-
+    const people = [...state.selected.values()];
+    refs.selectedList.innerHTML = people.length ? people.map(person => {
+      const id = escapeHtml(person.id);
+      const options = person.child ? ["Sunday School", "Children's Church", "Nursery", "Wednesday Kids", "Worship", "Other / General"] : ["Worship", "Sunday School", "Small Group", "Other / General"];
+      return `<div class="selected-child-card ${person.present ? '' : 'absent'}">
+        <div class="selected-child-header"><label class="present-check"><input type="checkbox" class="child-present-check" data-person-id="${id}" ${person.present ? 'checked' : ''}>
+        <span><strong>${escapeHtml(personName(person))}</strong><small class="person-kind">${person.child ? 'Child' : 'Adult'}</small></span></label>
+        <button class="btn secondary remove-selected" type="button" data-person-id="${id}" aria-label="Remove ${escapeHtml(personName(person))}">×</button></div>
+        <div class="child-fields ${person.present ? '' : 'inactive'}"><div class="field"><label for="service-${id}">${person.child ? 'Room / Service' : 'Service / Group'}</label>
+        <select class="child-service-select" id="service-${id}" data-person-id="${id}">${options.map(option => `<option value="${escapeHtml(option)}" ${person.service === option ? 'selected' : ''}>${escapeHtml(option)}</option>`).join('')}</select></div>
+        ${person.child ? `<div class="field"><label for="note-${id}">Allergies / notes</label><textarea id="note-${id}" class="child-note-input" data-person-id="${id}" rows="2">${escapeHtml(person.note || '')}</textarea></div>` : ''}</div></div>`;
+    }).join('') : '<div class="empty">No family selected.</div>';
+    const present = presentChildren();
+    const kids = present.filter(p => p.child).length;
+    const summary = document.getElementById('selectionSummary');
+    if (summary) summary.textContent = !present.length ? 'Select everyone who is present.' : `${present.length} selected • ${kids ? `${kids} child${kids === 1 ? '' : 'ren'} — pickup label will print` : 'Attendance only — no label needed'}`;
     updateSubmitState();
   }
-
 
   function removeSelectedPerson(
     id
@@ -1527,192 +717,31 @@
      ============================================================ */
 
   async function submitSelectedCheckin() {
-
-    const people =
-      presentChildren()
-
-        .map(
-          (person) => ({
-
-            id:
-              String(
-                person.id
-              ),
-
-            name:
-              personName(
-                person
-              ),
-
-            service:
-              person.service ||
-              "Sunday School",
-
-            note:
-              String(
-                person.note ||
-                ""
-              ).trim()
-
-          })
-        );
-
-    if (
-      !people.length
-    ) {
-      return;
-    }
-
-    hideNotice(
-      refs.checkinNotice
-    );
-
-    setBusy(
-      refs.submitCheckinBtn,
-      true,
-      "Checking In…"
-    );
-
+    const people = presentChildren().map(person => ({ id: String(person.id), name: personName(person), child: person.child, service: person.service, note: String(person.note || '').trim() }));
+    if (!people.length || refs.submitCheckinBtn.disabled) return;
+    const signature = JSON.stringify(people);
+    if (state.requestSignature !== signature) { state.requestSignature = signature; state.requestId = crypto.randomUUID(); }
+    hideNotice(refs.checkinNotice);
+    setBusy(refs.submitCheckinBtn, true, 'Saving…');
     try {
-
-      const aggregateNote =
-        people
-
-          .filter(
-            (person) =>
-              person.note
-          )
-
-          .map(
-            (person) =>
-              `${person.name}: ${person.note}`
-          )
-
-          .join(
-            " | "
-          );
-
-      const result =
-        await KidsAPI
-          .submitAttendance({
-
-            people,
-
-            children:
-              people,
-
-            noteText:
-              aggregateNote,
-
-            note:
-              aggregateNote
-
-          });
-
-      refs.successNames.textContent =
-        people
-
-          .map(
-            (person) =>
-              person.name
-          )
-
-          .join(
-            ", "
-          );
-
-      refs.successCode.textContent =
-        result.pickupCode ||
-        "—";
-
-      /*
-       * ==========================================================
-       * RETURNING FAMILY PRINTING
-       * ==========================================================
-       *
-       * Send ALL present children to the local printer service
-       * as ONE household.
-       *
-       * The Windows printer service creates ONE parent pickup
-       * label regardless of the number of checked-in children.
-       *
-       * IMPORTANT:
-       * Attendance has already been successfully saved above.
-       * Printer failure NEVER cancels the check-in.
-       * ==========================================================
-       */
-
-      if (window.KidsPrinter) {
-
-        window.KidsPrinter
-          .printLabels(
-            people,
-            {
-              mode: "household"
-            }
-          )
-          .catch((error) => {
-
-            console.error(
-              "Household label printing failed:",
-              error
-            );
-
-          });
-      }
-
-      if (
-        refs.successEmailStatus
-      ) {
-
-        refs.successEmailStatus.textContent =
-          result.emailSent
-
-            ? `Pickup code emailed${
-                result.parentName
-                  ? ` to ${result.parentName}`
-                  : ""
-              }.`
-
-            : "Pickup email was not sent. Please give the parent the code shown above.";
-
-        refs.successEmailStatus.style.color =
-          result.emailSent
-            ? ""
-            : "#9d2634";
-
-      }
-
-      switchView(
-        "successScreen"
-      );
-
-      startNextFamilyCountdown();
-
-    } catch (error) {
-
-      showNotice(
-        refs.checkinNotice,
-        error.message,
-        "error"
-      );
-
-    } finally {
-
-      setBusy(
-        refs.submitCheckinBtn,
-        false
-      );
-
-      updateSubmitState();
-
-    }
+      const result = await KidsAPI.submitFamilyAttendance({ people, requestId: state.requestId,
+        note: people.filter(p => p.note).map(p => `${p.name}: ${p.note}`).join(' | ') });
+      const children = result.labelChildren || [];
+      refs.successNames.textContent = people.map(p => p.name).join(', ');
+      refs.successCode.textContent = result.pickupCode || '';
+      refs.successCode.hidden = !children.length;
+      document.getElementById('pickupInstructions').hidden = !children.length;
+      refs.successEmailStatus.textContent = children.length ? (result.emailSent ? `Pickup code emailed${result.parentName ? ' to ' + result.parentName : ''}.` : 'Please keep the pickup code shown. Pickup email was not sent for this request.') : 'Attendance saved. No label or pickup code is needed.';
+      refs.successEmailStatus.style.color = children.length && !result.emailSent ? '#9d2634' : '';
+      window.KidsPrinter?.reset();
+      switchView('successScreen'); startNextFamilyCountdown();
+      // One print call, only for present children; adults never enter the printer payload.
+      if (children.length && result.duplicate) window.KidsPrinter?.prepareReprint(children, { mode: 'household' });
+      if (children.length && !result.duplicate && window.KidsPrinter) window.KidsPrinter.printLabels(children, { mode: 'household' }).catch(console.error);
+      // Keep the key until the next family's selection changes, so an immediate retry is idempotent.
+    } catch (error) { showNotice(refs.checkinNotice, error.message, 'error'); }
+    finally { setBusy(refs.submitCheckinBtn, false); updateSubmitState(); }
   }
-
-
-  /* ============================================================
-     FIRST-TIME GUEST CHECK-IN
-     ============================================================ */
 
   async function submitGuest(
     event
@@ -1901,8 +930,10 @@
 
           });
 
-      refs.successNames.textContent =
-        fullName;
+      refs.successCode.hidden = false;
+      document.getElementById('pickupInstructions').hidden = false;
+      window.KidsPrinter?.reset();
+      refs.successNames.textContent = fullName;
 
       refs.successCode.textContent =
         result.pickupCode ||

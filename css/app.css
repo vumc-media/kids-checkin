@@ -649,345 +649,36 @@ button{
 }
 
 
-/* ============================================================
-   LANDING SCREEN
-   ============================================================ */
-
-.landing-screen{
-  min-height:100vh;
-  display:grid;
-  place-items:center;
-  padding:20px;
-
-  background:
-    radial-gradient(
-      circle at 12% 10%,
-      rgba(61,162,145,.22),
-      transparent 34%
-    ),
-
-    radial-gradient(
-      circle at 88% 86%,
-      rgba(236,82,59,.18),
-      transparent 32%
-    ),
-
-    linear-gradient(
-      145deg,
-      #f8fbff 0%,
-      #eef4f8 52%,
-      #e5edf5 100%
-    );
-}
-
-
-.landing-card{
-  width:min(980px,100%);
-  padding:26px 30px 22px;
-  text-align:center;
-  background:
-    rgba(255,255,255,.97);
-  border:
-    1px solid var(--line);
-  border-radius:28px;
-  box-shadow:
-    0 28px 70px rgba(11,42,82,.18);
-}
-
-
-.landing-logo{
-  display:block;
-  width:min(300px,72%);
-  max-height:165px;
-  margin:0 auto 4px;
-  object-fit:contain;
-}
-
-
-.landing-copy{
-  max-width:680px;
-  margin:0 auto 22px;
-}
-
-
-.landing-eyebrow{
-  margin:0 0 3px;
-  color:#e9533d;
-  font-size:13px;
-  font-weight:900;
-  letter-spacing:.18em;
-  text-transform:uppercase;
-}
-
-
-.landing-copy h1{
-  margin:0;
-  color:var(--navy);
-  font-size:
-    clamp(28px,4vw,42px);
-  line-height:1.05;
-}
-
-
-.landing-copy p:not(.landing-eyebrow){
-  margin:7px 0 0;
-  color:var(--muted);
-  font-size:16px;
-}
-
-
-/* ============================================================
-   BOLD WORKFLOW CARD GRID
-   ============================================================ */
-
-.landing-actions{
-  display:grid;
-
-  grid-template-columns:
-    repeat(2,minmax(0,1fr));
-
-  gap:16px;
-}
-
-
-.landing-action{
-  position:relative;
-
-  min-height:128px;
-
-  display:flex;
-  align-items:center;
-
-  gap:17px;
-
-  padding:20px;
-
-  text-align:left;
-
-  color:#fff;
-
-  border:0;
-
-  border-radius:22px;
-
-  text-decoration:none;
-
-  overflow:hidden;
-
-  box-shadow:
-    0 14px 28px rgba(11,42,82,.18);
-
-  transition:
-    transform .15s ease,
-    box-shadow .15s ease,
-    filter .15s ease;
-}
-
-
-.landing-action::after{
-  content:"";
-
-  position:absolute;
-
-  width:130px;
-  height:130px;
-
-  right:-45px;
-  bottom:-65px;
-
-  border-radius:50%;
-
-  background:
-    rgba(255,255,255,.10);
-
-  pointer-events:none;
-}
-
-
-.landing-action:hover{
-  transform:
-    translateY(-3px);
-
-  box-shadow:
-    0 20px 36px rgba(11,42,82,.24);
-
-  filter:
-    saturate(1.08);
-}
-
-
-.landing-action:active{
-  transform:
-    translateY(0)
-    scale(.985);
-}
-
-
-/* CHECK IN — BLUE */
-
-.checkin-action{
-  background:
-    linear-gradient(
-      145deg,
-      #0759c7,
-      #1687ff
-    );
-}
-
-
-/* FIRST TIME GUEST — GREEN */
-
-.guest-action{
-  background:
-    linear-gradient(
-      145deg,
-      #16824f,
-      #34b875
-    );
-}
-
-
-/* PICK UP — ORANGE */
-
-.pickup-action{
-  background:
-    linear-gradient(
-      145deg,
-      #d85b0b,
-      #ff922e
-    );
-}
-
-
-/* ADMINISTRATOR — PURPLE */
-
-.admin-action{
-  background:
-    linear-gradient(
-      145deg,
-      #5d2ca5,
-      #8b51d8
-    );
-}
-
-
-/* ============================================================
-   WORKFLOW ICONS
-   ============================================================ */
-
-.landing-action-icon{
-  position:relative;
-  z-index:1;
-
-  flex:
-    0 0 62px;
-
-  display:grid;
-  place-items:center;
-
-  width:62px;
-  height:62px;
-
-  border:
-    1px solid rgba(255,255,255,.22);
-
-  border-radius:18px;
-
-  background:
-    rgba(255,255,255,.18);
-
-  box-shadow:
-    inset 0 1px 0
-    rgba(255,255,255,.16);
-
-  color:#fff;
-
-  font-size:31px;
-  font-weight:900;
-}
-
-
-.landing-action-copy{
-  position:relative;
-  z-index:1;
-  min-width:0;
-}
-
-
-.landing-action strong{
-  display:block;
-
-  color:#fff;
-
-  font-size:21px;
-
-  font-weight:900;
-
-  line-height:1.15;
-}
-
-
-.landing-action small{
-  display:block;
-
-  margin-top:6px;
-
-  color:
-    rgba(255,255,255,.92);
-
-  font-size:13px;
-
-  font-weight:650;
-
-  line-height:1.35;
-}
-
-
-/* ============================================================
-   LANDING FOOTER
-   ============================================================ */
-
-.landing-footer{
-  margin:18px 0 9px;
-  color:var(--navy);
-  font-size:12px;
-  font-weight:900;
-  letter-spacing:.15em;
-}
-
-
-.landing-footer .love{
-  color:#e9533d;
-}
-
-.landing-footer .grow{
-  color:#7da92d;
-}
-
-.landing-footer .serve{
-  color:#337c83;
-}
-
-
-.landing-status{
-  display:inline-flex;
-  align-items:center;
-  gap:8px;
-
-  padding:7px 11px;
-
-  color:var(--muted);
-
-  border:
-    1px solid var(--line);
-
-  border-radius:999px;
-
-  background:#f7fafc;
-
-  font-size:12px;
-}
-
+/* Welcome: restrained navy / teal gradients and squared cards. */
+.landing-screen{min-height:100vh;display:grid;place-items:center;padding:36px 24px;background:linear-gradient(125deg,#fff4ec 0%,#f7faed 48%,#e2f2f2 100%)}
+.landing-card{width:min(1040px,100%);padding:36px 42px 26px;color:#243d49;text-align:left;background:rgba(255,255,255,.86);border:1px solid #ffffff;border-radius:16px;box-shadow:0 24px 70px #346a6818}
+.church-wordmark{font-size:15px;font-weight:750;letter-spacing:.15em;color:#45676a;margin-bottom:42px}
+.church-wordmark span{display:block;font-size:10px;letter-spacing:.14em;margin-top:7px;font-weight:500}
+.landing-copy{max-width:700px;margin-bottom:30px}
+.landing-eyebrow{font-size:13px;color:#397d73;letter-spacing:.04em;margin:0 0 10px}
+.landing-copy h1{font-size:clamp(34px,4vw,52px);font-weight:650;letter-spacing:-.035em;margin:0;line-height:1.1;color:#243d49}
+.landing-copy p:not(.landing-eyebrow){color:#5b7178;line-height:1.5;margin:12px 0 0}
+.landing-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.landing-action{display:flex;align-items:flex-start;gap:16px;min-height:142px;padding:26px;text-align:left;color:#172e42;text-decoration:none;border:1px solid #ffffff66;border-radius:12px;background:linear-gradient(120deg,#fff,#e9f2f2);box-shadow:0 5px 18px #061d2e15;transition:transform .15s ease,box-shadow .15s ease}
+.landing-action:hover{transform:translateY(-2px);box-shadow:0 10px 22px #061d2e30}
+.landing-action:focus-visible{outline:3px solid #2c8579;outline-offset:4px}
+.landing-action:active{transform:translateY(0)}
+.checkin-action{background:linear-gradient(120deg,#ffddd3,#f6ad98)}
+.guest-action{background:linear-gradient(120deg,#ecf3d3,#c9dc9f)}
+.pickup-action{background:linear-gradient(120deg,#d7eef0,#a4cdd0)}
+.admin-action{background:linear-gradient(120deg,#f2f5f4,#d8e3e0)}
+.landing-action-icon{display:grid;place-items:center;flex:0 0 34px;width:34px;height:34px;margin-top:1px;color:#315c68;font-size:25px;font-weight:400}
+.landing-action-copy strong{display:block;color:#172e42;font-size:22px;font-weight:650;line-height:1.2}
+.landing-action-copy small{display:block;margin-top:10px;color:#475d6b;font-size:14px;line-height:1.5;font-weight:400}
+.landing-footer{margin:28px 0 14px;color:#597f79;font-size:11px;letter-spacing:.2em;font-weight:500}
+.landing-footer span{color:inherit}
+.landing-status{display:inline-flex;align-items:center;gap:9px;font-size:12px;color:#597276}
+.person-kind{display:block;font-size:11px;font-weight:500;color:var(--muted);margin-top:3px}
+.present-check{flex:1;line-height:1.35}
+.present-check input{flex:0 0 23px;width:23px;height:23px}
+#selectionSummary{padding:10px;background:#e5efed;border-radius:8px;color:#244f48;line-height:1.5}
+[hidden]{display:none!important}
+@media(prefers-reduced-motion:reduce){.landing-action{transition:none}.landing-action:hover{transform:none}}
 
 /* ============================================================
    MOBILE / TABLET
@@ -1059,3 +750,20 @@ button{
   }
 
 }
+
+/* Use the supplied church artwork unchanged, with its white margins clipped by the image frame. */
+.welcome-brand{display:grid;grid-template-columns:250px minmax(0,1fr);align-items:center;gap:36px;margin-bottom:30px}
+.church-logo{display:block;width:250px;height:154px;object-fit:cover;object-position:center;background:#fff;border-radius:6px}
+.welcome-brand .landing-copy{margin:0}
+.welcome-brand .landing-copy h1{font-size:clamp(30px,3.4vw,44px)}
+@media(max-width:680px){.welcome-brand{grid-template-columns:1fr;gap:20px}.church-logo{width:220px;height:136px}.welcome-brand .landing-copy h1{font-size:32px}}
+
+/* Spacious, near-square welcome tiles. */
+.landing-card{width:min(1060px,100%)}
+.landing-actions{grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+.landing-action{aspect-ratio:1 / 1.05;min-height:220px;flex-direction:column;justify-content:center;align-items:flex-start;gap:18px;padding:24px;border-radius:14px}
+.landing-action-icon{flex:0 0 auto;width:40px;height:40px;font-size:32px}
+.landing-action-copy strong{font-size:22px;line-height:1.2}
+.landing-action-copy small{font-size:14px;line-height:1.5}
+@media(max-width:980px){.landing-actions{grid-template-columns:repeat(2,minmax(0,1fr));max-width:680px;margin:0 auto}.landing-action{aspect-ratio:1.15 / 1;min-height:220px}}
+@media(max-width:480px){.landing-screen{padding:14px}.landing-card{padding:20px}.landing-actions{gap:10px}.landing-action{padding:16px;min-height:190px;aspect-ratio:auto;gap:12px}.landing-action-copy strong{font-size:18px}.landing-action-copy small{font-size:12px}.landing-action-icon{font-size:27px;width:32px;height:32px}}

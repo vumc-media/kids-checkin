@@ -17,7 +17,7 @@
 
   <meta
     name="description"
-    content="VUMC Kids Check-In kiosk"
+    content="VUMC Check-In kiosk"
   >
 
   <link
@@ -27,11 +27,11 @@
 
   <link
     rel="stylesheet"
-    href="./css/app.css?v=3.0.0"
+    href="./css/app.css?v=4.0.1"
   >
 
   <title>
-    VUMC Kids Check-In
+    VUMC Check-In
   </title>
 
 </head>
@@ -52,21 +52,17 @@
     <div class="landing-card">
 
 
-      <img
-        class="landing-logo"
-        src="./media/vumc-kids-pco.png"
-        alt="Versailles United Methodist Kids Ministry"
-      >
-
+      <div class="welcome-brand">
+      <img class="church-logo" src="./media/vumc-logo.jpg" alt="Versailles United Methodist Church — Love, Grow, Serve">
 
       <div class="landing-copy">
 
         <p class="landing-eyebrow">
-          Welcome to
+          Welcome. You belong here.
         </p>
 
         <h1>
-          VUMC Kids Check-In
+          VUMC Check-In
         </h1>
 
         <p>
@@ -76,6 +72,8 @@
 
       </div>
 
+
+      </div>
 
       <!-- ========================================================
            WORKFLOW CARDS
@@ -99,11 +97,11 @@
           <span class="landing-action-copy">
 
             <strong>
-              Check In
+              Family Check-In
             </strong>
 
             <small>
-              Find returning children
+              Check in everyone who is here today
             </small>
 
           </span>
@@ -155,7 +153,7 @@
           <span class="landing-action-copy">
 
             <strong>
-              Pick Up
+              Child Pickup
             </strong>
 
             <small>
@@ -184,7 +182,7 @@
           <span class="landing-action-copy">
 
             <strong>
-              Administrator
+              Staff Access
             </strong>
 
             <small>
@@ -274,7 +272,7 @@
         <div>
 
           <h1>
-            VUMC Kids
+            VUMC
           </h1>
 
           <p>
@@ -479,12 +477,14 @@
 
                 <p class="selection-help">
 
-                  Check only the children who are present.
+                  Check the adults and children who are present.
 
-                  Each child can have a separate room and note.
+                  Choose a service or room for each person. Labels print only when children are checked in.
 
                 </p>
 
+
+                <p id="selectionSummary" class="selection-help" aria-live="polite"></p>
 
                 <div
                   id="selectedList"
@@ -839,7 +839,7 @@
           ></div>
 
 
-          <p>
+          <p id="pickupInstructions">
             Keep this pickup code.
             Staff will use it when the child is picked up.
           </p>
@@ -864,7 +864,7 @@
             class="btn primary"
             type="button"
           >
-            Next Family
+            Next Household
           </button>
 
 
@@ -884,17 +884,17 @@
        JAVASCRIPT
        ============================================================ -->
 
-  <script src="./js/config.js?v=3.0.0"></script>
+  <script src="./js/config.js?v=4.0.1"></script>
 
-  <script src="./js/api.js?v=3.0.0"></script>
+  <script src="./js/api.js?v=4.0.1"></script>
 
   <!--
     Local Windows DYMO printer bridge.
     This MUST load before app.js.
   -->
-  <script src="./js/dymo-print.js?v=3.0.0"></script>
+  <script src="./js/dymo-print.js?v=4.0.1"></script>
 
-  <script src="./js/app.js?v=3.0.0"></script>
+  <script src="./js/app.js?v=4.0.1"></script>
 
 
 </body>

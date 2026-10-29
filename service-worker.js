@@ -1,4 +1,4 @@
-const CACHE_NAME = "vumc-kids-v2.7.0";
+const CACHE_NAME = "vumc-family-v4.0.1";
 const APP_FILES = [
   "./",
   "./index.html",
@@ -8,6 +8,8 @@ const APP_FILES = [
   "./js/app.js",
   "./js/dymo-print.js",
   "./manifest.json",
+  "./media/vumc-logo.jpg",
+  "./admin/family-attendance.js",
   "./media/vumc-kids-pco.png"
 ];
 
